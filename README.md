@@ -36,10 +36,7 @@ composer require tp5er/tp5-databackup dev-master
     "require": {
         "tp5er/tp5-databackup": "dev-master"
     },
-    //或
-    "require": {
-        "tp5er/tp5-databackup": "1.0.0"
-    },
+
 ~~~
 
 ### 引入类文件
