@@ -26,13 +26,13 @@ mysql -uroot -p'123456' dbname < backdb.sql
 
 ### 使用composer进行安装
 ~~~
-composer require tp5er/tp5-databackup 2.0
+composer require tp5er/tp5-databackup 1.0.0
 ~~~
 
 ### 使用composer update进行安装
 ~~~
     "require": {
-        "tp5er/tp5-databackup": "2.0"
+        "tp5er/tp5-databackup": "1.0.0"
     },
 
 ~~~
