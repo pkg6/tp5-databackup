@@ -20,21 +20,19 @@ mysql -uroot -p'123456' dbname < backdb.sql
 
 ## 使用本类进行数据库备份
 
-> 本库目前只支持thinkphp5.0.* 版本，如果需要使用其他，请自行修改版本中的方法
-
 > demo 下载地址
 > https://github.com/tp5er/tp5-databackup/tree/master/test
 
 
 ### 使用composer进行安装
 ~~~
-composer require tp5er/tp5-databackup dev-master
+composer require tp5er/tp5-databackup 2.0
 ~~~
 
 ### 使用composer update进行安装
 ~~~
     "require": {
-        "tp5er/tp5-databackup": "dev-master"
+        "tp5er/tp5-databackup": "2.0"
     },
 
 ~~~
@@ -135,8 +133,5 @@ max_execution_time =1000
     $db->setTimeout($time)->setFile($file)->import($start);
 ~~~
 
-
-## 注意
-由于本来采用的是thinkphp db链接方式，存在很多问题，并且只兼容thinkphp5.0.*版本，因此本类将被不在进行维护，计划在某个时间段进行重构。
 
 
