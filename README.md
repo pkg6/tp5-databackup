@@ -28,8 +28,6 @@ mysql -uroot -p'123456' dbname < backdb.sql
 ~~~
 优先
 composer require tp5er/tp5-databackup 2.0.x-dev
-
-composer require tp5er/tp5-databackup 2.0.0
 ~~~
 
 
