@@ -198,8 +198,8 @@ then
 fi
 ~~~
 
-# QQ交流群
+# QQ交流
 
-[99208965](https://qm.qq.com/cgi-bin/qm/qr?k=CpYnmru9AM_T3KBJbjd1HXkpLSVxD6ww&jump_from=webapi)
+[1751212020](http://wpa.qq.com/msgrd?v=3&uin=1751212020&site=qq&menu=yes)
 
 
