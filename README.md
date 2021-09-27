@@ -28,10 +28,10 @@ mysql -uroot -p'123456' dbname < backdb.sql
 ### 使用composer进行安装
 ~~~
 优先
-composer require tp5er/tp5-databackup 2.0.x-dev
+composer require tp5er/tp5-databackup
 ~~~
 
-
+> 同时支持tp6和tp5版本
 
 ### 引入类文件
 ~~~
