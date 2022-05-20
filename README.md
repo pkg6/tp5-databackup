@@ -21,9 +21,6 @@ mysql -uroot -p'123456' dbname < backdb.sql
 
 ## 使用本类进行数据库备份
 
-> demo 下载地址
-> https://github.com/tp5er/tp5-databackup/tree/master/test
-
 
 ### 使用composer进行安装
 ~~~
