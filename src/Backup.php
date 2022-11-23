@@ -331,8 +331,14 @@ class Backup
             //备份数据记录
             $result = $db->query("SELECT * FROM `{$table}` LIMIT {$start}, 1000");
             foreach ($result as $row) {
-                $row = array_map('addslashes', $row);
-                $sql = "INSERT INTO `{$table}` VALUES ('" . str_replace(array("\r", "\n"), array('\\r', '\\n'), implode("', '", $row)) . "');\n";
+                if(is_numeric($row)){
+                    $values[]=$row;
+                }else if(is_null($row)){
+                    $values[]='NULL';
+                }else{
+                    $values[]="'".str_replace(array("\r", "\n"), array('\\r', '\\n'), addslashes($row))."'";
+                }
+                $sql = "INSERT INTO `{$table}` VALUES (" . implode(", ", $values) . ");\n";
                 if (false === $this->write($sql)) {
                     return false;
                 }
