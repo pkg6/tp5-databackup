@@ -224,7 +224,7 @@ class Backup
             $file = $this->getFile('time', $time);
             array_map("unlink", $this->getFile('time', $time));
             if (count($this->getFile('time', $time))) {
-                throw new \Exception("File {$path} deleted failed");
+                throw new \Exception("File {$file} deleted failed");
             } else {
                 return $time;
             }
