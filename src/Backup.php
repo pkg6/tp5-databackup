@@ -94,7 +94,7 @@ class Backup
     /**
      * 设置备份文件名
      * @param Array $file 文件名字
-     * @return object
+     * @return $this
      */
     public function setFile($file = null)
     {
@@ -110,7 +110,10 @@ class Backup
         return $this;
     }
 
-    //数据类连接
+    /**
+     * 数据类连接
+     * @return \think\db\ConnectionInterface
+     */
     public static function connect()
     {
         if (APP::VERSION >= "6.0.0") {
@@ -119,8 +122,12 @@ class Backup
             return Db::connect();
         }
     }
-
-    //数据库表列表
+    /**
+     * 数据库表列表
+     * @param $table
+     * @param $type
+     * @return array
+     */
     public function dataList($table = null, $type = 1)
     {
         $db = self::connect();
@@ -137,7 +144,10 @@ class Backup
         //$list;
     }
 
-    //数据库备份文件列表
+    /**
+     * 数据库备份文件列表
+     * @return array
+     */
     public function fileList()
     {
         if (!is_dir($this->config['path'])) {
@@ -172,6 +182,12 @@ class Backup
         return $list;
     }
 
+    /**
+     * @param $type
+     * @param $time
+     * @return array|false|mixed|string
+     * @throws \Exception
+     */
     public function getFile($type = '', $time = 0)
     {
         if (!is_numeric($time)) {
@@ -216,7 +232,12 @@ class Backup
         }
     }
 
-    //删除备份文件
+    /**
+     * 删除备份文件
+     * @param $time
+     * @return mixed
+     * @throws \Exception
+     */
     public function delFile($time)
     {
         if ($time) {
@@ -256,6 +277,12 @@ class Backup
         }
     }
 
+    /**
+     * @param $start
+     * @param $time
+     * @return array|false|int
+     * @throws \Exception
+     */
     public function import($start, $time)
     {
         //还原数据
@@ -330,7 +357,7 @@ class Backup
             $sql    .= "-- Table structure for `{$table}`\n";
             $sql    .= "-- -----------------------------\n";
             $sql    .= "DROP TABLE IF EXISTS `{$table}`;\n";
-            $sql    .= trim($result[0]['Create Table']) . ";\n\n";
+            $sql    .= trim($result[0]['Create Table'] ?? $result[0]['Create View']) . ";\n\n";
             if (false === $this->write($sql)) {
                 return false;
             }
