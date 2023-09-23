@@ -36,7 +36,7 @@ class Backup
      * @var integer
      */
     private $config = array(
-        'path'     => './Data/',
+        'path'     => './backup/',
         //数据库备份路径
         'part'     => 20971520,
         //数据库备份卷大小
@@ -174,7 +174,6 @@ class Backup
 
     public function getFile($type = '', $time = 0)
     {
-        //
         if (!is_numeric($time)) {
             throw new \Exception("{$time} Illegal data type");
         }
@@ -295,12 +294,17 @@ class Backup
      */
     public function Backup_Init()
     {
+
+        $hostname = $this->dbconfig["hostname"] ?? $this->dbconfig["connections"][$this->dbconfig["default"]]["hostname"];
+        $hostport = $this->dbconfig["hostport"] ?? $this->dbconfig["connections"][$this->dbconfig["default"]]["hostport"];
+        $database = $this->dbconfig["database"] ?? $this->dbconfig["connections"][$this->dbconfig["default"]]["database"];
+
         $sql = "-- -----------------------------\n";
         $sql .= "-- Think MySQL Data Transfer \n";
         $sql .= "-- \n";
-        $sql .= "-- Host     : " . $this->dbconfig['hostname'] . "\n";
-        $sql .= "-- Port     : " . $this->dbconfig['hostport'] . "\n";
-        $sql .= "-- Database : " . $this->dbconfig['database'] . "\n";
+        $sql .= "-- Host     : " . $hostname . "\n";
+        $sql .= "-- Port     : " . $hostport . "\n";
+        $sql .= "-- Database : " . $database . "\n";
         $sql .= "-- \n";
         $sql .= "-- Part : #{$this->file['part']}\n";
         $sql .= "-- Date : " . date("Y-m-d H:i:s") . "\n";
