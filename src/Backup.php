@@ -47,8 +47,8 @@ class Backup
 
     /**
      * 数据库备份构造方法
-     * @param array $file 备份或还原的文件信息
      * @param array $config 备份配置信息
+     * @throws \Exception
      */
     public function __construct($config = [])
     {
@@ -198,7 +198,6 @@ class Backup
                 $name = date('Ymd-His', $time) . '-*.sql*';
                 $path = realpath($this->config['path']) . DIRECTORY_SEPARATOR . $name;
                 return glob($path);
-                break;
             case 'timeverif':
                 $name  = date('Ymd-His', $time) . '-*.sql*';
                 $path  = realpath($this->config['path']) . DIRECTORY_SEPARATOR . $name;
@@ -216,19 +215,14 @@ class Backup
                 } else {
                     throw new \Exception("File {$files['0']} may be damaged, please check again");
                 }
-                break;
             case 'pathname':
                 return "{$this->config['path']}{$this->file['name']}-{$this->file['part']}.sql";
-                break;
             case 'filename':
                 return "{$this->file['name']}-{$this->file['part']}.sql";
-                break;
             case 'filepath':
                 return $this->config['path'];
-                break;
             default:
-                $arr = array('pathname' => "{$this->config['path']}{$this->file['name']}-{$this->file['part']}.sql", 'filename' => "{$this->file['name']}-{$this->file['part']}.sql", 'filepath' => $this->config['path'], 'file' => $this->file);
-                return $arr;
+                return array('pathname' => "{$this->config['path']}{$this->file['name']}-{$this->file['part']}.sql", 'filename' => "{$this->file['name']}-{$this->file['part']}.sql", 'filepath' => $this->config['path'], 'file' => $this->file);;
         }
     }
 
@@ -259,6 +253,7 @@ class Backup
      * @param string $time
      * @param integer $part
      * @return array|mixed|string
+     * @throws \Exception
      */
     public function downloadFile($time, $part = 0)
     {
@@ -406,6 +401,7 @@ class Backup
      * 优化表
      * @param String $tables 表名
      * @return String $tables
+     * @throws \Exception
      */
     public function optimize($tables = null)
     {
@@ -431,6 +427,7 @@ class Backup
      * 修复表
      * @param String $tables 表名
      * @return String $tables
+     * @throws \Exception
      */
     public function repair($tables = null)
     {
