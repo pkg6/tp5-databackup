@@ -36,7 +36,7 @@ class Backup
      * @var integer
      */
     private $config = array(
-        'path'     => './backup/',
+        'path'     => '',
         //数据库备份路径
         'part'     => 20971520,
         //数据库备份卷大小
@@ -53,6 +53,9 @@ class Backup
     public function __construct($config = [])
     {
         $this->config = array_merge($this->config, $config);
+        if (empty($this->config["path"])){
+            $this->config["path"]=  \app()->getRootPath()."backup/";
+        }
         //初始化文件名
         $this->setFile();
         //初始化数据库连接参数
