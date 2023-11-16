@@ -53,8 +53,8 @@ class Backup
     public function __construct($config = [])
     {
         $this->config = array_merge($this->config, $config);
-        if (empty($this->config["path"])){
-            $this->config["path"]=  \app()->getRootPath()."backup/";
+        if (empty($this->config["path"])) {
+            $this->config["path"] = \app()->getRootPath() . "backup/";
         }
         //初始化文件名
         $this->setFile();
@@ -125,6 +125,7 @@ class Backup
             return Db::connect();
         }
     }
+
     /**
      * 数据库表列表
      * @param $table
@@ -350,12 +351,16 @@ class Backup
         // 备份表结构
         if (0 == $start) {
             $result = $db->query("SHOW CREATE TABLE `{$table}`");
-            $sql    = "\n";
-            $sql    .= "-- -----------------------------\n";
-            $sql    .= "-- Table structure for `{$table}`\n";
-            $sql    .= "-- -----------------------------\n";
-            $sql    .= "DROP TABLE IF EXISTS `{$table}`;\n";
-            $sql    .= trim($result[0]['Create Table'] ?? $result[0]['Create View']) . ";\n\n";
+            //视图数据 不进行备份
+            if (!empty($result[0]["Create View"])) {
+                return 0;
+            }
+            $sql = "\n";
+            $sql .= "-- -----------------------------\n";
+            $sql .= "-- Table structure for `{$table}`\n";
+            $sql .= "-- -----------------------------\n";
+            $sql .= "DROP TABLE IF EXISTS `{$table}`;\n";
+            $sql .= trim($result[0]['Create Table'] ?? $result[0]['Create View']) . ";\n\n";
             if (false === $this->write($sql)) {
                 return false;
             }
