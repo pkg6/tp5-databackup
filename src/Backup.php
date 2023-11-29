@@ -5,9 +5,6 @@
 // +----------------------------------------------------------------------
 namespace tp5er\Backup;
 
-use think\Db;
-use think\App;
-
 class Backup
 {
     /**
@@ -36,23 +33,22 @@ class Backup
      * @var integer
      */
     private $config = array(
-        'path'     => '',
+        'path' => '',
         //数据库备份路径
-        'part'     => 20971520,
+        'part' => 20971520,
         //数据库备份卷大小
         'compress' => 0,
         //数据库备份文件是否启用压缩 0不压缩 1 压缩
-        'level'    => 9,
+        'level' => 9,
     );
 
     /**
      * 数据库备份构造方法
-     * @param array $config 备份配置信息
      * @throws \Exception
      */
-    public function __construct($config = [])
+    public function __construct()
     {
-        $this->config = array_merge($this->config, $config);
+        $this->config = array_merge($this->config, app()->config->get("backup"));
         if (empty($this->config["path"])) {
             $this->config["path"] = \app()->getRootPath() . "backup/";
         }
@@ -96,7 +92,7 @@ class Backup
 
     /**
      * 设置备份文件名
-     * @param Array $file 文件名字
+     * @param [] $file 文件名字
      * @return $this
      */
     public function setFile($file = null)
@@ -119,11 +115,7 @@ class Backup
      */
     public static function connect()
     {
-        if (APP::VERSION >= "6.0.0") {
-            return \think\facade\Db::connect();
-        } else {
-            return Db::connect();
-        }
+        return \think\facade\Db::connect();
     }
 
     /**
@@ -145,7 +137,6 @@ class Backup
             }
         }
         return array_map('array_change_key_case', $list);
-        //$list;
     }
 
     /**
@@ -164,22 +155,22 @@ class Backup
         foreach ($glob as $name => $file) {
             if (preg_match('/^\\d{8,8}-\\d{6,6}-\\d+\\.sql(?:\\.gz)?$/', $name)) {
                 $name1 = $name;
-                $name  = sscanf($name, '%4s%2s%2s-%2s%2s%2s-%d');
-                $date  = "{$name[0]}-{$name[1]}-{$name[2]}";
-                $time  = "{$name[3]}:{$name[4]}:{$name[5]}";
-                $part  = $name[6];
+                $name = sscanf($name, '%4s%2s%2s-%2s%2s%2s-%d');
+                $date = "{$name[0]}-{$name[1]}-{$name[2]}";
+                $time = "{$name[3]}:{$name[4]}:{$name[5]}";
+                $part = $name[6];
                 if (isset($list["{$date} {$time}"])) {
-                    $info         = $list["{$date} {$time}"];
+                    $info = $list["{$date} {$time}"];
                     $info['part'] = max($info['part'], $part);
                     $info['size'] = $info['size'] + $file->getSize();
                 } else {
                     $info['part'] = $part;
                     $info['size'] = $file->getSize();
                 }
-                $extension               = strtoupper(pathinfo($file->getFilename(), PATHINFO_EXTENSION));
-                $info['name']            = $name1;
-                $info['compress']        = $extension === 'SQL' ? '-' : $extension;
-                $info['time']            = strtotime("{$date} {$time}");
+                $extension = strtoupper(pathinfo($file->getFilename(), PATHINFO_EXTENSION));
+                $info['name'] = $name1;
+                $info['compress'] = $extension === 'SQL' ? '-' : $extension;
+                $info['time'] = strtotime("{$date} {$time}");
                 $list["{$date} {$time}"] = $info;
             }
         }
@@ -203,14 +194,14 @@ class Backup
                 $path = realpath($this->config['path']) . DIRECTORY_SEPARATOR . $name;
                 return glob($path);
             case 'timeverif':
-                $name  = date('Ymd-His', $time) . '-*.sql*';
-                $path  = realpath($this->config['path']) . DIRECTORY_SEPARATOR . $name;
+                $name = date('Ymd-His', $time) . '-*.sql*';
+                $path = realpath($this->config['path']) . DIRECTORY_SEPARATOR . $name;
                 $files = glob($path);
-                $list  = array();
+                $list = array();
                 foreach ($files as $name) {
-                    $basename        = basename($name);
-                    $match           = sscanf($basename, '%4s%2s%2s-%2s%2s%2s-%d');
-                    $gz              = preg_match('/^\\d{8,8}-\\d{6,6}-\\d+\\.sql.gz$/', $basename);
+                    $basename = basename($name);
+                    $match = sscanf($basename, '%4s%2s%2s-%2s%2s%2s-%d');
+                    $gz = preg_match('/^\\d{8,8}-\\d{6,6}-\\d+\\.sql.gz$/', $basename);
                     $list[$match[6]] = array($match[6], $name, $gz);
                 }
                 $last = end($list);
@@ -261,7 +252,7 @@ class Backup
      */
     public function downloadFile($time, $part = 0)
     {
-        $file     = $this->getFile('time', $time);
+        $file = $this->getFile('time', $time);
         $fileName = $file[$part];
         if (file_exists($fileName)) {
             ob_end_clean();
@@ -285,14 +276,14 @@ class Backup
     public function import($start, $time)
     {
         //还原数据
-        $db         = self::connect();
+        $db = self::connect();
         $this->file = $this->getFile('time', $time);
         if ($this->config['compress']) {
-            $gz   = gzopen($this->file[0], 'r');
+            $gz = gzopen($this->file[0], 'r');
             $size = 0;
         } else {
             $size = filesize($this->file[0]);
-            $gz   = fopen($this->file[0], 'r');
+            $gz = fopen($this->file[0], 'r');
         }
         $sql = '';
         if ($start) {
@@ -367,7 +358,7 @@ class Backup
         }
         //数据总数
         $result = $db->query("SELECT COUNT(*) AS count FROM `{$table}`");
-        $count  = $result['0']['count'];
+        $count = $result['0']['count'];
         //备份表数据
         if ($count) {
             //写入数据注释
@@ -417,7 +408,7 @@ class Backup
             $db = self::connect();
             if (is_array($tables)) {
                 $tables = implode('`,`', $tables);
-                $list   = $db->query("OPTIMIZE TABLE `{$tables}`");
+                $list = $db->query("OPTIMIZE TABLE `{$tables}`");
             } else {
                 $list = $db->query("OPTIMIZE TABLE `{$tables}`");
             }
@@ -443,7 +434,7 @@ class Backup
             $db = self::connect();
             if (is_array($tables)) {
                 $tables = implode('`,`', $tables);
-                $list   = $db->query("REPAIR TABLE `{$tables}`");
+                $list = $db->query("REPAIR TABLE `{$tables}`");
             } else {
                 $list = $db->query("REPAIR TABLE `{$tables}`");
             }
@@ -489,7 +480,7 @@ class Backup
             }
         } else {
             $backuppath = $this->config['path'];
-            $filename   = "{$backuppath}{$this->file['name']}-{$this->file['part']}.sql";
+            $filename = "{$backuppath}{$this->file['name']}-{$this->file['part']}.sql";
             if ($this->config['compress']) {
                 $filename = "{$filename}.gz";
                 $this->fp = @gzopen($filename, "a{$this->config['level']}");
