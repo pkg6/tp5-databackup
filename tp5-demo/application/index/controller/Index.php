@@ -4,7 +4,7 @@ use think\Controller;
 use think\Db;
 use think\Request;
 use think\Session;
-use \tp5er\Backup;
+use \tp5er\Backup\Backup;
 class Index extends Controller
 {
     public function index()

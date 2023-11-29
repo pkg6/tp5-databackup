@@ -38,7 +38,7 @@ composer require tp5er/tp5-databackup
 
 ### 引入类文件
 ~~~
-use \tp5er\Backup;
+use \tp5er\Backup\Backup;
 ~~~
 
 ### 参数说明

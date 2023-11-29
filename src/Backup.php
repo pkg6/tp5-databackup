@@ -3,7 +3,7 @@
 // | Author: tp5er <tp5er@qq.com>
 // | QQ: 1751212020
 // +----------------------------------------------------------------------
-namespace tp5er;
+namespace tp5er\Backup;
 
 use think\Db;
 use think\App;
