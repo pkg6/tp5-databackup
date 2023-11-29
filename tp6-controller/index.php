@@ -2,7 +2,7 @@
 namespace app\controller;
 
 use app\BaseController;
-use tp5er\Backup;
+use tp5er\Backup\Backup;
 
 class Index extends BaseController
 {
