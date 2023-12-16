@@ -8,6 +8,10 @@ namespace tp5er\Backup;
 use think\Db;
 use think\App;
 
+/**
+ * Class Backup
+ * @package tp5er\Backup
+ */
 class Backup
 {
     /**
