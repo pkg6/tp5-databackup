@@ -17,6 +17,9 @@
   "autoload": {
     "psr-4": {
       "tp5er\\Backup\\": "src/"
-    }
+    },
+    "files": [
+        "src/function.php"
+    ]
   }
 }
