@@ -18,13 +18,6 @@ mysql -uroot -p'123456' dbname < backdb.sql
 
 ~~~
 
-## 该库版本说明
-1. 0.0.1 支持thinkphp5
-2. 0.1.0 支持thinkphp5 和 thinkphp5.1
-3. 1.0.0 支持thinkphp5,thinkphp5.1,thinkphp6 同时会以thinphp6为主
-4. 2.x   计划完全支持thinkphp6 不再向下兼容
-5. tp5-demo目录下的案例是基于thinkphp5，如果需要更高版本thinkphp自己参考test代码进行模仿修改
-
 
 ## 使用本类进行数据库备份
 

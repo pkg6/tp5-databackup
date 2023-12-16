@@ -96,7 +96,7 @@ class Backup
 
     /**
      * 设置备份文件名
-     * @param Array $file 文件名字
+     * @param [] $file 文件名字
      * @return $this
      */
     public function setFile($file = null)
@@ -119,11 +119,7 @@ class Backup
      */
     public static function connect()
     {
-        if (APP::VERSION >= "6.0.0") {
-            return \think\facade\Db::connect();
-        } else {
-            return Db::connect();
-        }
+        return \think\facade\Db::connect();
     }
 
     /**
