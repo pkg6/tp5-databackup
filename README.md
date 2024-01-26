@@ -16,6 +16,12 @@ mysqldump -uroot -hhost -ppassword --all-databases > backdb.sql
 //恢复
 mysql -uroot -p'123456' dbname < backdb.sql 
 
+
+//远程备份与还原
+备份数据库 192.168.3.10 root 123456 test
+mysqldump -h 192.168.3.10 -u root -p123456 test > test.sql
+还原数据库 192.168.3.11 root 123456 test
+mysql -h 192.168.3.11 -P 3306 -u root -p123456 test < test.sql
 ~~~
 
 
@@ -189,4 +195,3 @@ then
   echo "delete $delfile" >> $backup_dir/log.txt
 fi
 ~~~
-
