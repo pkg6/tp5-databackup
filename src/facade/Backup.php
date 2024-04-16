@@ -1,5 +1,13 @@
 <?php
 
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 namespace tp5er\Backup\facade;
 
 use think\Facade;
@@ -8,24 +16,17 @@ use tp5er\Backup\BuildSQLInterface;
 use tp5er\Backup\WriteAbstract;
 
 /**
- * Class Backup
+ * Class Backup.
+ *
  * @method static BackupManager setBuildSQL(BuildSQLInterface $buildSQL = null)
  * @method static BackupManager setWrite(WriteAbstract $write)
  * @method static BackupManager database($database = null)
  * @method static array tables()
  * @method static mixed optimize($tables = null)
  * @method static mixed repair($tables = null)
- *
  * @method static bool apiBackupStep1(array $tables)
  * @method static bool apiBackupStep2($index = 0, $offset = 0)
- *
  * @method static bool import($fileName)
- *
- *
- *
- *
- *
- *
  */
 class Backup extends Facade
 {

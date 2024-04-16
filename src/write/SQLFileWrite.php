@@ -1,7 +1,14 @@
 <?php
 
-namespace tp5er\Backup\write;
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
 
+namespace tp5er\Backup\write;
 
 use tp5er\Backup\exception\FileException;
 use tp5er\Backup\WriteAbstract;
@@ -15,6 +22,7 @@ class SQLFileWrite extends WriteAbstract
 
     /**
      * @param string $sql
+     *
      * @return bool
      */
     public function writeSQL(string $sql)
@@ -22,8 +30,10 @@ class SQLFileWrite extends WriteAbstract
         $result = file_put_contents($this->getFileName(), $sql . PHP_EOL, LOCK_EX | FILE_APPEND);
         if ($result) {
             clearstatcache();
+
             return true;
         }
+
         return false;
     }
 
@@ -37,18 +47,20 @@ class SQLFileWrite extends WriteAbstract
 
     /**
      * @param $file
+     *
      * @return array|false|string|string[]
      */
     public function readSQL($file)
     {
-        if (!file_exists($file)) {
+        if ( ! file_exists($file)) {
             throw new FileException($file);
         }
-        $sql    = file_get_contents($file);
+        $sql = file_get_contents($file);
         $newsql = "";
         foreach (explode(";\n", trim($sql)) as $query) {
             $newsql .= $query;
         }
+
         return $newsql;
     }
 }

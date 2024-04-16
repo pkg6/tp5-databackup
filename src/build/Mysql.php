@@ -1,5 +1,13 @@
 <?php
 
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 namespace tp5er\Backup\build;
 
 use think\db\ConnectionInterface;
@@ -9,6 +17,7 @@ class Mysql implements BuildSQLInterface
 {
     /**
      * @param ConnectionInterface $connection
+     *
      * @return array
      */
     public function tables(ConnectionInterface $connection)
@@ -19,6 +28,7 @@ class Mysql implements BuildSQLInterface
     /**
      * @param ConnectionInterface $connection
      * @param $table
+     *
      * @return string
      */
     public function optimize(ConnectionInterface $connection, $table = null)
@@ -26,12 +36,14 @@ class Mysql implements BuildSQLInterface
         if (is_array($table)) {
             $table = implode('`,`', $table);
         }
+
         return $connection->query("OPTIMIZE TABLE `{$table}`");
     }
 
     /**
      * @param ConnectionInterface $connection
      * @param $table
+     *
      * @return mixed
      */
     public function repair(ConnectionInterface $connection, $table = null)
@@ -39,12 +51,14 @@ class Mysql implements BuildSQLInterface
         if (is_array($table)) {
             $table = implode('`,`', $table);
         }
+
         return $connection->query("REPAIR TABLE `{$table}`");
     }
 
     /**
      * @param ConnectionInterface $connection
      * @param $table
+     *
      * @return array
      */
     public function tableStructure(ConnectionInterface $connection, $table)
@@ -52,9 +66,10 @@ class Mysql implements BuildSQLInterface
         $result = $connection->query("SHOW CREATE TABLE `{$table}`");
 
         $sql = trim($result[0]['Create Table'] ?? $result[0]['Create View']);
-        if (!empty($result[0]["Create View"])) {
+        if ( ! empty($result[0]["Create View"])) {
             return [false, $sql];
         }
+
         return [true, $sql];
     }
 
@@ -62,6 +77,7 @@ class Mysql implements BuildSQLInterface
      * @param ConnectionInterface $connection
      * @param $table
      * @param int $offset
+     *
      * @return array
      */
     public function tableInstert(ConnectionInterface $connection, $table, $offset = 0, $maxLimit = 100)
@@ -74,26 +90,28 @@ class Mysql implements BuildSQLInterface
             return [0, ""];
         }
         $tableFieldArr = $this->tableField($result[0]);
-        $sql           = "INSERT INTO `{$table}` (" . implode(",", $tableFieldArr) . ") VALUES ";
-        $tableDataArr  = [];
+        $sql = "INSERT INTO `{$table}` (" . implode(",", $tableFieldArr) . ") VALUES ";
+        $tableDataArr = [];
         foreach ($result as &$row) {
             foreach ($row as &$val) {
                 if (is_numeric($val)) {
-                } else if (is_null($val)) {
+                } elseif (is_null($val)) {
                     $val = 'NULL';
                 } else {
-                    $val = "'" . str_replace(array("\r", "\n"), array('\\r', '\\n'), addslashes($val)) . "'";
+                    $val = "'" . str_replace(["\r", "\n"], ['\\r', '\\n'], addslashes($val)) . "'";
                 }
             }
             $tableDataArr[] = PHP_EOL . "(" . implode(", ", array_values($row)) . ")";
         }
         $sql .= implode(",", $tableDataArr);
+
         return [$offset + 1, $sql];
     }
 
     /**
      * @param ConnectionInterface $connection
      * @param $sql
+     *
      * @return int
      */
     public function execute(ConnectionInterface $connection, $sql)
@@ -103,6 +121,7 @@ class Mysql implements BuildSQLInterface
 
     /**
      * @param array $field
+     *
      * @return array
      */
     protected function tableField(array $field)
@@ -111,6 +130,7 @@ class Mysql implements BuildSQLInterface
         foreach ($field as $f => $v) {
             $sqlArr[$f] = "`{$f}`";
         }
+
         return $sqlArr;
     }
 
