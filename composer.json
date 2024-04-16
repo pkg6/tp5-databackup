@@ -11,7 +11,7 @@
   "require": {
     "php": ">=7.2.5",
     "ext-zlib": "*",
-    "topthink/framework": "v6.0.*"
+    "topthink/framework": "v6.*"
 
   },
   "autoload": {
