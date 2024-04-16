@@ -32,6 +32,7 @@ class ApiController
 
 
     /**
+     * 导入
      * http://127.0.0.1:8000/index/import?file=fastadmin-mysql-20240416184903.sql
      * @return \think\Response
      */
@@ -46,7 +47,7 @@ class ApiController
         }
     }
 
-
+    //导出
     //http://127.0.0.1:8000/index/export
     public function export()
     {

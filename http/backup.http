@@ -18,6 +18,8 @@ Content-Type: application/json
 }
 
 
+
+
 ###
 # 进行数据备份
 GET http://127.0.0.1:8000/index/export?index=0&offset=0
@@ -27,6 +29,24 @@ Accept: application/json
 
 }
 
+
+###
+# 备份文件列表
+GET http://127.0.0.1:8000/index/filelist
+Accept: application/json
+
+{
+
+}
+
+###
+# 备份文件列表
+GET http://127.0.0.1:8000/index/import?file=fastadmin-mysql-20240416184903.sql
+Accept: application/json
+
+{
+
+}
 
 ###
 # 修复表
