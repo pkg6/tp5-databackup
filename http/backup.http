@@ -1,0 +1,48 @@
+
+###
+# 获取数据库表
+GET http://127.0.0.1:8000/index/tables
+Content-Type: application/json
+
+{
+
+}
+
+###
+# 创建备份任务
+POST http://127.0.0.1:8000/index/export
+Content-Type: application/json
+
+{
+  "tables": ["admin","log"]
+}
+
+
+###
+# 进行数据备份
+GET http://127.0.0.1:8000/index/export?index=0&offset=0
+Accept: application/json
+
+{
+
+}
+
+
+###
+# 修复表
+POST http://127.0.0.1:8000/index/repair
+Accept: application/json
+
+{
+  "tables": ["admin","log"]
+}
+
+
+###
+# 优化表
+POST http://127.0.0.1:8000/index/optimize
+Accept: application/json
+
+{
+  "tables": ["admin","log"]
+}

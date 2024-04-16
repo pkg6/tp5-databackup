@@ -1,0 +1,56 @@
+<?php
+
+namespace tp5er\Backup;
+
+use think\db\ConnectionInterface;
+
+interface BuildSQLInterface
+{
+    /**
+     * 获取所有表
+     * @param ConnectionInterface $connection
+     * @return array
+     */
+    public function tables(ConnectionInterface $connection);
+
+    /**
+     * 优化表
+     * 需要判断table如果是字符串表示单表操作，如果是数组就是多表操作
+     * @param ConnectionInterface $connection
+     * @param null $table
+     * @return string
+     */
+    public function optimize(ConnectionInterface $connection, $table = null);
+
+    /**
+     * 修复表
+     * 需要判断table如果是字符串表示单表操作，如果是数组就是多表操作
+     * @param ConnectionInterface $connection
+     * @param null $table
+     * @return mixed
+     */
+    public function repair(ConnectionInterface $connection, $table = null);
+
+    /**
+     * @param ConnectionInterface $connection
+     * @param $table
+     * @return array
+     */
+    public function tableStructure(ConnectionInterface $connection, $table);
+
+
+    /**
+     * @param ConnectionInterface $connection
+     * @param $table
+     * @param $offset
+     * @return mixed
+     */
+    public function tableInstert(ConnectionInterface $connection, $table, $offset = 0);
+
+    /**
+     * @param ConnectionInterface $connection
+     * @param $sql
+     * @return int
+     */
+    public function execute(ConnectionInterface $connection, $sql);
+}
