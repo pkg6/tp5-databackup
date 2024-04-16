@@ -1,5 +1,13 @@
 <?php
 
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 namespace tp5er\Backup;
 
 use think\App;
@@ -17,13 +25,15 @@ abstract class WriteAbstract
     protected $manager;
 
     /**
-     * 写入的文件名
+     * 写入的文件名.
+     *
      * @var string
      */
     protected $filename;
 
     /**
      * @param App $app
+     *
      * @return void
      */
     public function setApp(App $app)
@@ -31,9 +41,9 @@ abstract class WriteAbstract
         $this->app = $app;
     }
 
-
     /**
      * @param BackupManager $manager
+     *
      * @return void
      */
     public function setManager(BackupManager $manager)
@@ -44,6 +54,7 @@ abstract class WriteAbstract
 
     /**
      * @param $filename
+     *
      * @return void
      */
     public function setFileName($filename)
@@ -59,9 +70,9 @@ abstract class WriteAbstract
         return $this->filename . "." . $this->ext();
     }
 
-
     /**
      * @param string $sql
+     *
      * @return bool
      */
     abstract public function writeSQL(string $sql);
@@ -69,7 +80,6 @@ abstract class WriteAbstract
     abstract public function readSQL($file);
 
     abstract public function ext();
-
 
     /**
      *

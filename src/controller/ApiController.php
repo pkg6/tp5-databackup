@@ -1,9 +1,15 @@
 <?php
 
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 namespace tp5er\Backup\controller;
 
-
-use tp5er\Backup\exception\FileException;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\facade\Backup;
 use tp5er\Backup\Response;
@@ -17,23 +23,26 @@ class ApiController
     public function tables()
     {
         $list = Backup::tables();
+
         return $this->success($list);
     }
 
     /**
-     * http://127.0.0.1:8000/index/filelist
+     * http://127.0.0.1:8000/index/filelist.
+     *
      * @return \think\Response
      */
     public function filelist()
     {
         $list = Backup::fileList();
+
         return $this->success($list, '拉去本地文件成功');
     }
 
-
     /**
      * 导入
-     * http://127.0.0.1:8000/index/import?file=fastadmin-mysql-20240416184903.sql
+     * http://127.0.0.1:8000/index/import?file=fastadmin-mysql-20240416184903.sql.
+     *
      * @return \think\Response
      */
     public function import()
@@ -41,6 +50,7 @@ class ApiController
         $file = request()->param('file');
         try {
             $ret = Backup::import($file);
+
             return $this->success($ret, "数据还原成功");
         } catch (\Exception $exception) {
             return $this->error($exception->getMessage());
@@ -54,7 +64,7 @@ class ApiController
         $validate = new ExportValidate();
         if (request()->isPost()) {
             $data = request()->post();
-            if (!$validate->scene("step1")->check($data)) {
+            if ( ! $validate->scene("step1")->check($data)) {
                 return $this->error($validate->getError());
             }
             try {
@@ -66,10 +76,10 @@ class ApiController
             }
         } elseif (request()->isGet()) {
             $data = request()->get();
-            if (!$validate->scene("step2")->check($data)) {
+            if ( ! $validate->scene("step2")->check($data)) {
                 return $this->error($validate->getError());
             }
-            $index      = $data["index"];
+            $index = $data["index"];
             $lastOffset = Backup::apiBackupStep2($index, $data["offset"]);
             if ($lastOffset == 0) {
                 return $this->success(['index' => $index + 1, 'offset' => $lastOffset], '备份完毕！');
@@ -78,7 +88,6 @@ class ApiController
             }
         }
     }
-
 
     //修复表
     public function repair()
