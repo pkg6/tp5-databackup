@@ -21,5 +21,15 @@
     "files": [
         "src/function.php"
     ]
+  },
+  "extra": {
+    "think": {
+      "services": [
+        "tp5er\\Backup\\Service"
+      ],
+      "config": {
+        "backup": "config/backup.php"
+      }
+    }
   }
 }
