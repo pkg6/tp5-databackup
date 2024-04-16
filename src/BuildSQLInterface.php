@@ -42,10 +42,11 @@ interface BuildSQLInterface
     /**
      * @param ConnectionInterface $connection
      * @param $table
-     * @param $offset
+     * @param int $offset
+     * @param int $maxLimit
      * @return mixed
      */
-    public function tableInstert(ConnectionInterface $connection, $table, $offset = 0);
+    public function tableInstert(ConnectionInterface $connection, $table, $offset = 0,$maxLimit = 100);
 
     /**
      * @param ConnectionInterface $connection

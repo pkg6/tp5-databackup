@@ -275,7 +275,14 @@ class BackupManager
      */
     public function writeTableData(WriteAbstract $write, $table, $offset, $annotation = true)
     {
-        list($lastOffset, $instertSQL) = $this->buildSQL->tableInstert($this->DB(), $table, $offset);
+
+        $limit = $this->app->config->get("backup.limit", 100);
+        list($lastOffset, $instertSQL) = $this->buildSQL->tableInstert(
+            $this->DB(),
+            $table,
+            $offset,
+            $limit
+        );
         if ($lastOffset <= 0) {
             return 0;
         }
@@ -370,7 +377,7 @@ class BackupManager
         $database_type_time = explode("-", pathinfo($fileName, PATHINFO_BASENAME));
         $sql                = $write->readSQL($fileName);
         // 操作数据库
-        $connectionName     = $database_type_time[1];
+        $connectionName = $database_type_time[1];
         return $this->buildSQL->execute($this->DB($connectionName), $sql);
     }
 

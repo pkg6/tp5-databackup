@@ -2,9 +2,7 @@
 
 namespace tp5er\Backup\build;
 
-use PDO;
 use think\db\ConnectionInterface;
-use think\db\PDOConnection;
 use tp5er\Backup\BuildSQLInterface;
 
 class Mysql implements BuildSQLInterface
@@ -63,16 +61,15 @@ class Mysql implements BuildSQLInterface
     /**
      * @param ConnectionInterface $connection
      * @param $table
-     * @param $limitStart
+     * @param int $offset
      * @return array
      */
-    public function tableInstert(ConnectionInterface $connection, $table, $offset = 0)
+    public function tableInstert(ConnectionInterface $connection, $table, $offset = 0, $maxLimit = 100)
     {
         if ($offset <= 0) {
             $offset = 1;
         }
-        $maxLimit = 1;
-        $result   = $connection->query("SELECT * FROM `{$table}` LIMIT {$maxLimit} OFFSET {$offset}");
+        $result = $connection->query("SELECT * FROM `{$table}` LIMIT {$maxLimit} OFFSET {$offset}");
         if (count($result) == 0) {
             return [0, ""];
         }
