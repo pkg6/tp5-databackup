@@ -8,6 +8,13 @@ namespace tp5er\Backup;
 use think\Db;
 use think\App;
 
+
+/**
+ * Class Backup
+ * @package tp5er\Backup
+ * @deprecated
+ * @see BackupManager
+ */
 class Backup
 {
     /**
@@ -46,6 +53,7 @@ class Backup
     );
 
     /**
+     * @internal [description]
      * 数据库备份构造方法
      * @param array $config 备份配置信息
      * @throws \Exception
