@@ -304,30 +304,28 @@ class BackupManager
     public function apiBackupStep1(array $tables)
     {
         $filename = $this->provider->generateFileName($this->database, $this->connectionName);
-
-        $lock = crc32($filename . json_encode($tables)) . ".lock";
-        if ($this->app->cache->has("tp5er.backup.lock")) {
-            throw new LockException($lock);
+        $lockKey = "tp5er.backup.task." . crc32($filename . json_encode($tables));
+        if ($this->app->cache->has($lockKey)) {
+            throw new LockException($lockKey);
         }
-
         $backup = $this->getWrite();
         $backup->setFileName($filename);
 
-        $this->app->cache->set("tp5er.backup.lock", $lock);
-        $this->app->cache->set("tp5er.backup.file", $filename);
-        $this->app->cache->set("tp5er.backup.tables", $tables);
+        $this->app->cache->tag("tp5er.backup")->set($lockKey, 1);
+        $this->app->cache->tag("tp5er.backup")->set("tp5er.backup.file", $filename);
+        $this->app->cache->tag("tp5er.backup")->set("tp5er.backup.tables", $tables);
 
         return $this->sqlCopyright($backup);
     }
 
     /**
+     * 根据tag清理缓存.
+     *
      * @return void
      */
     public function cleanup()
     {
-        $this->app->cache->delete("tp5er.backup.lock");
-        $this->app->cache->delete("tp5er.backup.file");
-        $this->app->cache->delete("tp5er.backup.tables");
+        $this->app->cache->tag("tp5er.backup")->clear();
     }
 
     /**
@@ -356,7 +354,11 @@ class BackupManager
         $cahceKey = "tp5er.backup." . $filename . ".page." . $table;
         if ($this->app->cache->has($cahceKey)) {
             $lastPage = $this->writeTableData($write, $table, $page, false);
-            $this->app->cache->set($cahceKey, $lastPage);
+            if ((int) $lastPage === 0) {
+                $this->app->cache->delete($cahceKey);
+            } else {
+                $this->app->cache->tag("tp5er.backup")->set($cahceKey, $lastPage);
+            }
 
             return $lastPage;
         } else {
@@ -364,7 +366,11 @@ class BackupManager
             $isbackupdata = $this->writeTableStructure($write, $table);
             if ($isbackupdata) {
                 $lastPage = $this->writeTableData($write, $table, $page);
-                $this->app->cache->set($cahceKey, $lastPage);
+                if ((int) $lastPage === 0) {
+                    $this->app->cache->delete($cahceKey);
+                } else {
+                    $this->app->cache->tag("tp5er.backup")->set($cahceKey, $lastPage);
+                }
 
                 return $lastPage;
             }

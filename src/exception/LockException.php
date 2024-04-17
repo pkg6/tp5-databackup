@@ -18,6 +18,6 @@ class LockException extends \Exception
     {
         $this->lock = $lock;
         //检测到有一个备份任务正在执行，请稍后再试！
-        parent::__construct(sprintf("The backup task is currently in progress. If it needs to be terminated, please delete %s", $this->lock), 0, null);
+        parent::__construct(sprintf("There is a task running, and if necessary, the cache can be cleared. key=`%s`", $this->lock), 0, null);
     }
 }
