@@ -10,10 +10,17 @@
 
 namespace tp5er\Backup;
 
+use tp5er\Backup\commands\BackupDatabaseCommand;
+
 class Service extends \think\Service
 {
+
     public function register()
     {
+        $this->commands([
+            BackupDatabaseCommand::class,
+        ]);
+
         $this->app->bind('tp5er.backup', function () {
             return new BackupManager($this->app);
         });
