@@ -129,7 +129,8 @@ class Provider implements ProviderInterface
     public function writeTableStructure($table)
     {
         list($isbackupdata, $createTableSql) = $this->buildSQL->tableStructure($this->connection, $table);
-        $sql = "--" . PHP_EOL;
+
+        $sql = PHP_EOL . "--" . PHP_EOL;
         $sql .= "-- 表的结构 `$table`" . PHP_EOL;
         $sql .= "-- " . PHP_EOL;
         $sql .= PHP_EOL;
@@ -200,13 +201,13 @@ class Provider implements ProviderInterface
     }
 
     /**
-     * @param $sql
+     * @param string|array $sqls
      *
      * @return int|mixed
      */
-    public function import($sql)
+    public function import($sqls)
     {
-        return $this->buildSQL->execute($this->connection, $sql);
+        return $this->buildSQL->execute($this->connection, $sqls);
     }
 
     /**

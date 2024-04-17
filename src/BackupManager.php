@@ -394,9 +394,10 @@ class BackupManager
         }
         list($_, $connectionName, $ext, $_) = $this->provider->fileNameDatabaseConnectionNameExt($fileName);
         $write = $this->getWrite($ext);
-        $sql = $write->readSQL($fileName);
+        $sqls = $write->readSQL($fileName);
+        $provider = $this->provider($connectionName, $write);
 
-        return $this->provider($connectionName, $write)->import($sql);
+        return $provider->import($sqls);
     }
 
     /**
@@ -473,7 +474,7 @@ class BackupManager
         $sql .= "-- PHP Version : " . phpversion() . PHP_EOL;
         $sql .= "-- Date : " . date("Y-m-d H:i:s") . PHP_EOL;
         $sql .= "-- -----------------------------" . PHP_EOL . PHP_EOL;
-        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL;
+        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
         $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;
 
         return $write->writeSQL($sql);

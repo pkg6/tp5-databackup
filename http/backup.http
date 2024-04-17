@@ -40,7 +40,7 @@ Accept: application/json
 }
 
 ###
-# 备份文件列表
+# 根据文件名还原数据
 GET http://127.0.0.1:8000/index/import?file=fastadmin-mysql-20240416184903.sql
 Accept: application/json
 

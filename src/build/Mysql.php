@@ -12,6 +12,7 @@ namespace tp5er\Backup\build;
 
 use think\db\ConnectionInterface;
 use tp5er\Backup\BuildSQLInterface;
+use tp5er\Backup\exception\SQLExecuteException;
 
 class Mysql implements BuildSQLInterface
 {
@@ -112,13 +113,27 @@ class Mysql implements BuildSQLInterface
 
     /**
      * @param ConnectionInterface $connection
-     * @param $sql
+     * @param string|array $sqls
      *
      * @return int
      */
-    public function execute(ConnectionInterface $connection, $sql)
+    public function execute(ConnectionInterface $connection, $sqls)
     {
-        return $connection->execute($sql);
+        if (is_array($sqls)) {
+            foreach ($sqls as $index => $sql) {
+                try {
+                    if ($sql != "") {
+                        $connection->execute($sql);
+                    }
+                } catch (\Exception $exception) {
+                    throw  new SQLExecuteException($index, $sql, $exception);
+                }
+            }
+
+            return 1;
+        }
+
+        return $connection->execute($sqls);
     }
 
     /**

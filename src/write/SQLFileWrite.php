@@ -60,12 +60,8 @@ class SQLFileWrite extends WriteAbstract
             throw new FileException($file);
         }
         $sql = file_get_contents($file);
-        $newsql = "";
         $sqlArr = explode(PHP_EOL . PHP_EOL, $sql);
-        foreach ($sqlArr as $query) {
-            $newsql .= $query;
-        }
 
-        return $newsql;
+        return $sqlArr;
     }
 }
