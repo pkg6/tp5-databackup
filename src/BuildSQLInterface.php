@@ -65,9 +65,9 @@ interface BuildSQLInterface
 
     /**
      * @param ConnectionInterface $connection
-     * @param $sql
+     * @param string|array $sqls
      *
      * @return int
      */
-    public function execute(ConnectionInterface $connection, $sql);
+    public function execute(ConnectionInterface $connection, $sqls);
 }

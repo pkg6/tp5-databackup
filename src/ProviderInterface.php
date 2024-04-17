@@ -106,11 +106,11 @@ interface ProviderInterface
     /**
      * 导入sql语句.
      *
-     * @param $sql
+     * @param string|array $sqls
      *
      * @return mixed
      */
-    public function import($sql);
+    public function import($sqls);
 
     /**
      * 生成文件名.
