@@ -271,7 +271,7 @@ class BackupManager
     /**
      * 优化表.
      *
-     * @param String $tables 表名
+     * @param String|array $tables 表名
      *
      * @throws \Exception
      */
@@ -283,11 +283,11 @@ class BackupManager
     /**
      * 修复表.
      *
-     * @param String $tables 表名
+     * @param string|array $tables 表名
      *
      * @throws \Exception
      */
-    public function repair($tables = null)
+    public function repair($tables)
     {
         return $this->provider()->repair($tables);
     }
@@ -435,7 +435,7 @@ class BackupManager
      */
     protected function writeTableData(WriteAbstract $write, $table, $page, $annotation = true)
     {
-        $limit = $this->app->config->get("backup.limit", 100);
+        $limit = $this->app->config->get("backup.limit", 10);
 
         return $this->provider(null, $write)->writeTableData($table, $limit, $page, $annotation);
     }
@@ -467,8 +467,8 @@ class BackupManager
         $sql .= "-- PHP Version : " . phpversion() . PHP_EOL;
         $sql .= "-- Date : " . date("Y-m-d H:i:s") . PHP_EOL;
         $sql .= "-- -----------------------------" . PHP_EOL . PHP_EOL;
-        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
-        $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL . PHP_EOL;
+        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL;
+        $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;
 
         return $write->writeSQL($sql);
     }
