@@ -64,6 +64,7 @@ class ApiController
         $validate = new ExportValidate();
         if (request()->isPost()) {
             $data = request()->post();
+
             if ( ! $validate->scene("step1")->check($data)) {
                 return $this->error($validate->getError());
             }
@@ -73,15 +74,19 @@ class ApiController
                 }
             } catch (LockException $exception) {
                 return $this->error('检测到有一个备份任务正在执行，请稍后再试！');
+            } catch (\Exception $exception) {
+                return $this->error($exception->getMessage());
             }
         } elseif (request()->isGet()) {
             $data = request()->get();
             if ( ! $validate->scene("step2")->check($data)) {
                 return $this->error($validate->getError());
             }
-            $index = $data["index"];
+            $index = (int) $data["index"];
             $lastOffset = Backup::apiBackupStep2($index, $data["offset"]);
             if ($lastOffset == 0) {
+                //所有的备份完成之后进行清理资源
+                //Backup::cleanup();
                 return $this->success(['index' => $index + 1, 'offset' => $lastOffset], '备份完毕！');
             } else {
                 return $this->success(['index' => $index, 'offset' => $lastOffset], '需要继续进行备份数据！');
