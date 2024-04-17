@@ -76,16 +76,18 @@ class Mysql implements BuildSQLInterface
     /**
      * @param ConnectionInterface $connection
      * @param $table
-     * @param int $offset
+     * @param int $page
+     * @param int $limit
      *
      * @return array
      */
-    public function tableInstert(ConnectionInterface $connection, $table, $offset = 0, $maxLimit = 100)
+    public function tableInstert(ConnectionInterface $connection, $table, $page = 0, $limit = 100)
     {
-        if ($offset <= 0) {
-            $offset = 1;
+        if ($page <= 0) {
+            $page = 1;
         }
-        $result = $connection->query("SELECT * FROM `{$table}` LIMIT {$maxLimit} OFFSET {$offset}");
+        $offset = ($page - 1) * $limit;
+        $result = $connection->query("SELECT * FROM `{$table}` LIMIT {$limit} OFFSET {$offset}");
         if (count($result) == 0) {
             return [0, ""];
         }
@@ -105,7 +107,7 @@ class Mysql implements BuildSQLInterface
         }
         $sql .= implode(",", $tableDataArr);
 
-        return [$offset + 1, $sql];
+        return [$page + 1, $sql];
     }
 
     /**

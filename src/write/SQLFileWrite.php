@@ -27,7 +27,11 @@ class SQLFileWrite extends WriteAbstract
      */
     public function writeSQL(string $sql)
     {
-        $result = file_put_contents($this->getFileName(), $sql . PHP_EOL, LOCK_EX | FILE_APPEND);
+        $result = file_put_contents(
+            $this->getFileName(),
+            $sql . PHP_EOL,
+            LOCK_EX | FILE_APPEND
+        );
         if ($result) {
             clearstatcache();
 
@@ -57,7 +61,8 @@ class SQLFileWrite extends WriteAbstract
         }
         $sql = file_get_contents($file);
         $newsql = "";
-        foreach (explode(";\n", trim($sql)) as $query) {
+        $sqlArr = explode(PHP_EOL . PHP_EOL, $sql);
+        foreach ($sqlArr as $query) {
             $newsql .= $query;
         }
 
