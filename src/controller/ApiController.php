@@ -70,7 +70,7 @@ class ApiController
             }
             try {
                 if (Backup::apiBackupStep1($data["tables"])) {
-                    return $this->success(['index' => 0, 'offset' => 1], '初始化成功！');
+                    return $this->success(['index' => 0, 'page' => 1], '初始化成功！');
                 }
             } catch (LockException $exception) {
                 return $this->error('检测到有一个备份任务正在执行，请稍后再试！');
@@ -83,13 +83,13 @@ class ApiController
                 return $this->error($validate->getError());
             }
             $index = (int) $data["index"];
-            $lastOffset = Backup::apiBackupStep2($index, $data["offset"]);
-            if ($lastOffset == 0) {
+            $lastPage = Backup::apiBackupStep2($index, $data["page"]);
+            if ($lastPage == 0) {
                 //所有的备份完成之后进行清理资源
                 //Backup::cleanup();
-                return $this->success(['index' => $index + 1, 'offset' => $lastOffset], '备份完毕！');
+                return $this->success(['index' => $index + 1, 'page' => $lastPage], '备份完毕！');
             } else {
-                return $this->success(['index' => $index, 'offset' => $lastOffset], '需要继续进行备份数据！');
+                return $this->success(['index' => $index, 'page' => $lastPage], '需要继续进行备份数据！');
             }
         }
     }

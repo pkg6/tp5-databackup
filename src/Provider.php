@@ -145,22 +145,22 @@ class Provider implements ProviderInterface
     /**
      * @param $table
      * @param $limit
-     * @param $offset
-     * @param $annotation
+     * @param $page
+     * @param bool $annotation
      *
      * @return int|mixed
      *
      * @throws WriteException
      */
-    public function writeTableData($table, $limit, $offset, $annotation = true)
+    public function writeTableData($table, $limit, $page, $annotation = true)
     {
-        list($lastOffset, $instertSQL) = $this->buildSQL->tableInstert(
+        list($lastPage, $instertSQL) = $this->buildSQL->tableInstert(
             $this->connection,
             $table,
-            $offset,
+            $page,
             $limit
         );
-        if ($lastOffset <= 0) {
+        if ($lastPage <= 0) {
             return 0;
         }
         $sql = "";
@@ -174,7 +174,7 @@ class Provider implements ProviderInterface
             throw new WriteException($this->write->getFileName());
         }
 
-        return $lastOffset;
+        return $lastPage;
     }
 
     /**

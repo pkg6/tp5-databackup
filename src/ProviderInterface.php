@@ -89,12 +89,12 @@ interface ProviderInterface
      *
      * @param string $table 操作的表
      * @param int $limit 处理数据量
-     * @param int $offset 向量
+     * @param int $page 分页数量
      * @param bool $annotation 是否加入注释
      *
      * @return int
      */
-    public function writeTableData($table, $limit, $offset, $annotation = true);
+    public function writeTableData($table, $limit, $page, $annotation = true);
 
     /**
      * 获取所有已经备份好的文件.

@@ -334,7 +334,7 @@ class BackupManager
      * 备份数据第二步.
      *
      * @param int $index
-     * @param int $offset
+     * @param int $page
      *
      * @return int
      *
@@ -342,7 +342,7 @@ class BackupManager
      * @throws ClassDefineException
      * @throws WriteException
      */
-    public function apiBackupStep2($index = 0, $offset = 0)
+    public function apiBackupStep2($index = 0, $page = 0)
     {
         $write = $this->getWrite();
         $filename = $this->app->cache->get("tp5er.backup.file");
@@ -353,20 +353,20 @@ class BackupManager
         $write->setFileName($filename);
         $tables = $this->app->cache->get("tp5er.backup.tables");
         $table = $tables[$index];
-        $cahceKey = "tp5er.backup." . $filename . ".offset." . $table;
+        $cahceKey = "tp5er.backup." . $filename . ".page." . $table;
         if ($this->app->cache->has($cahceKey)) {
-            $lastOffset = $this->writeTableData($write, $table, $offset, false);
-            $this->app->cache->set($cahceKey, $lastOffset);
+            $lastPage = $this->writeTableData($write, $table, $page, false);
+            $this->app->cache->set($cahceKey, $lastPage);
 
-            return $lastOffset;
+            return $lastPage;
         } else {
             // 首先备份表结构和数据
             $isbackupdata = $this->writeTableStructure($write, $table);
             if ($isbackupdata) {
-                $lastOffset = $this->writeTableData($write, $table, $offset);
-                $this->app->cache->set($cahceKey, $lastOffset);
+                $lastPage = $this->writeTableData($write, $table, $page);
+                $this->app->cache->set($cahceKey, $lastPage);
 
-                return $lastOffset;
+                return $lastPage;
             }
         }
 
@@ -425,18 +425,19 @@ class BackupManager
      *
      * @param WriteAbstract $write
      * @param $table
-     * @param $offset
+     * @param $page
      * @param bool $annotation
      *
      * @return int|mixed
      *
+     * @throws ClassDefineException
      * @throws WriteException
      */
-    protected function writeTableData(WriteAbstract $write, $table, $offset, $annotation = true)
+    protected function writeTableData(WriteAbstract $write, $table, $page, $annotation = true)
     {
         $limit = $this->app->config->get("backup.limit", 100);
 
-        return $this->provider(null, $write)->writeTableData($table, $limit, $offset, $annotation);
+        return $this->provider(null, $write)->writeTableData($table, $limit, $page, $annotation);
     }
 
     /**

@@ -62,8 +62,8 @@ class Index extends ApiController
 
 > 导出的流程：
 >
-> 1. /index/export发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'offset' => 1]`
->2. /index/export发送get请求/index/export?index=0&offset=0,直到offset=0表示该数据备份完成
+> 1. /index/export发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`
+>2. /index/export发送get请求/index/export?index=0&page=0,直到page=0表示该数据备份完成
 >
 > 导入流程
 > 

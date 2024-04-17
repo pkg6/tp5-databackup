@@ -22,7 +22,7 @@ Content-Type: application/json
 
 ###
 # 进行数据备份
-GET http://127.0.0.1:8000/index/export?index=0&offset=0
+GET http://127.0.0.1:8000/index/export?index=0&page=0
 Accept: application/json
 
 {

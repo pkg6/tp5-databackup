@@ -27,7 +27,7 @@ use tp5er\Backup\WriteAbstract;
  * @method static mixed optimize($tables = null)
  * @method static mixed repair($tables = null)
  * @method static bool apiBackupStep1(array $tables)
- * @method static bool apiBackupStep2($index = 0, $offset = 0)
+ * @method static bool apiBackupStep2($index = 0, $page = 0)
  * @method static void cleanup()
  * @method static bool import($fileName)
  */
