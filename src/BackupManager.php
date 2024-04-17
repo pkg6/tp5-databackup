@@ -467,7 +467,7 @@ class BackupManager
         $sql .= "-- PHP Version : " . phpversion() . PHP_EOL;
         $sql .= "-- Date : " . date("Y-m-d H:i:s") . PHP_EOL;
         $sql .= "-- -----------------------------" . PHP_EOL . PHP_EOL;
-        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL;
+        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
         $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL . PHP_EOL;
 
         return $write->writeSQL($sql);

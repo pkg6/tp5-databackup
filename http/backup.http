@@ -14,7 +14,7 @@ POST http://127.0.0.1:8000/index/export
 Content-Type: application/json
 
 {
-  "tables": ["admin","log"]
+  "tables": ["fa_category","fa_auth_rule"]
 }
 
 
