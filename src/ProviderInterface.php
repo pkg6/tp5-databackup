@@ -60,20 +60,20 @@ interface ProviderInterface
     /**
      * 优化表.
      *
-     * @param null $tables
+     * @param string|array $tables
      *
      * @return mixed
      */
-    public function optimize($tables = null);
+    public function optimize($tables);
 
     /**
      * 修复表.
      *
-     * @param null $tables
+     * @param string|array $tables
      *
      * @return int
      */
-    public function repair($tables = null);
+    public function repair($tables);
 
     /**
      * 写入表结构.

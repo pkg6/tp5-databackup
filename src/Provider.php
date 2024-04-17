@@ -39,7 +39,7 @@ class Provider implements ProviderInterface
      */
     public function setPath($path)
     {
-        if (!file_exists($path)) {
+        if ( ! file_exists($path)) {
             mkdir($path, 0755, true);
         }
         $this->path = $path;
@@ -104,7 +104,7 @@ class Provider implements ProviderInterface
      *
      * @return mixed|string
      */
-    public function optimize($tables = null)
+    public function optimize($tables)
     {
         return $this->buildSQL->optimize($this->connection, $tables);
     }
@@ -114,7 +114,7 @@ class Provider implements ProviderInterface
      *
      * @return mixed
      */
-    public function repair($tables = null)
+    public function repair($tables)
     {
         return $this->buildSQL->repair($this->connection, $tables);
     }
@@ -165,11 +165,11 @@ class Provider implements ProviderInterface
         }
         $sql = "";
         if ($annotation) {
-            $sql .= "--" . PHP_EOL . PHP_EOL;
+            $sql .= "--" . PHP_EOL;
             $sql .= "-- 转存表中的数据 `$table`" . PHP_EOL;
-            $sql .= "-- " . PHP_EOL . PHP_EOL;
+            $sql .= "-- " . PHP_EOL;
         }
-        $sql .= $instertSQL;
+        $sql .= PHP_EOL . $instertSQL;
         if ($this->write->writeSQL($sql) == false) {
             throw new WriteException($this->write->getFileName());
         }
@@ -187,13 +187,13 @@ class Provider implements ProviderInterface
         foreach ($glob as $name => $file) {
             /* var \SplFileInfo $file*/
             list($database, $connection_name) = self::fileNameDatabaseConnectionNameExt($file);
-            $info["name"]            = $name;
-            $info["database"]        = $database;
+            $info["name"] = $name;
+            $info["database"] = $database;
             $info["connection_name"] = $connection_name;
-            $info["filename"]        = $file->getPathname();
-            $info["ext"]             = $file->getExtension();
-            $info["size"]            = format_bytes($file->getSize());
-            $list[]                  = $info;
+            $info["filename"] = $file->getPathname();
+            $info["ext"] = $file->getExtension();
+            $info["size"] = format_bytes($file->getSize());
+            $list[] = $info;
         }
 
         return $list;
@@ -217,7 +217,7 @@ class Provider implements ProviderInterface
     public function fileNameDatabaseConnectionNameExt($fileName)
     {
         $path_info = pathinfo($fileName);
-        $ret       = explode("-", $path_info["basename"]);
+        $ret = explode("-", $path_info["basename"]);
 
         return [$ret[0] ?: "", $ret[1] ?: "", $path_info["extension"] ?: "", $ret[2] ?: ""];
     }

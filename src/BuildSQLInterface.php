@@ -32,7 +32,7 @@ interface BuildSQLInterface
      *
      * @return string
      */
-    public function optimize(ConnectionInterface $connection, $table = null);
+    public function optimize(ConnectionInterface $connection, $table);
 
     /**
      * 修复表
@@ -43,7 +43,7 @@ interface BuildSQLInterface
      *
      * @return mixed
      */
-    public function repair(ConnectionInterface $connection, $table = null);
+    public function repair(ConnectionInterface $connection, $table);
 
     /**
      * @param ConnectionInterface $connection

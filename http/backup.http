@@ -54,7 +54,7 @@ POST http://127.0.0.1:8000/index/repair
 Accept: application/json
 
 {
-  "tables": ["admin","log"]
+  "tables": ["fa_category","fa_auth_rule"]
 }
 
 
@@ -64,5 +64,5 @@ POST http://127.0.0.1:8000/index/optimize
 Accept: application/json
 
 {
-  "tables": ["admin","log"]
+  "tables": ["fa_category","fa_auth_rule"]
 }
