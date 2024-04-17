@@ -1,28 +1,14 @@
 [![Latest Stable Version](http://poser.pugx.org/tp5er/tp5-databackup/v)](https://packagist.org/packages/tp5er/tp5-databackup) [![Total Downloads](http://poser.pugx.org/tp5er/tp5-databackup/downloads)](https://packagist.org/packages/tp5er/tp5-databackup) [![Latest Unstable Version](http://poser.pugx.org/tp5er/tp5-databackup/v/unstable)](https://packagist.org/packages/tp5er/tp5-databackup) [![License](http://poser.pugx.org/tp5er/tp5-databackup/license)](https://packagist.org/packages/tp5er/tp5-databackup) [![PHP Version Require](http://poser.pugx.org/tp5er/tp5-databackup/require/php)](https://packagist.org/packages/tp5er/tp5-databackup)
 
-## 最佳数据备份还原- shell脚本方式
-~~~
-
-//备份整个数据库
-mysqldump -uroot -hhost -ppassword dbname > backdb.sql
-//备份数据库中的某个表
-mysqldump -uroot -hhost -ppassword dbname tbname1, tbname2 > backdb.sql
-//备份多个数据库
-mysqldump -uroot -hhost -ppassword --databases dbname1, dbname2 > backdb.sql
-//备份系统中所有数据库
-mysqldump -uroot -hhost -ppassword --all-databases > backdb.sql
 
 
-//恢复
-mysql -uroot -p'123456' dbname < backdb.sql 
+## 重要的事情说三遍！！！重要的事情说三遍！！！重要的事情说三遍！！！
 
-
-//远程备份与还原
-备份数据库 192.168.3.10 root 123456 test
-mysqldump -h 192.168.3.10 -u root -p123456 test > test.sql
-还原数据库 192.168.3.11 root 123456 test
-mysql -h 192.168.3.11 -P 3306 -u root -p123456 test < test.sql
-~~~
+> 1. 即将发布2.1版本，与以往有很大的差别，不过提供相关案例接口，可以参考接口自己实现
+>
+> 2. 个人见解：如果你的数据量比较大的话，不建议使用此方法，用shell脚本或云服务进行备份，此包支持数据量比较小的系统。
+> 3. pkg6都是作者自己一个人在维护，欢迎提交pull request 减少本人的精力
+> 4. 作者使用的php版本是php7.4，目测写的方法兼容8以上，如果不兼容，可以提交pull request，记得写一下注释哦！！！
 
 
 ## 使用本类进行数据库备份
@@ -71,7 +57,33 @@ class Index extends ApiController
 
 
 
-### 备份shell脚本
+## mysql常见命令
+
+~~~
+
+//备份整个数据库
+mysqldump -uroot -hhost -ppassword dbname > backdb.sql
+//备份数据库中的某个表
+mysqldump -uroot -hhost -ppassword dbname tbname1, tbname2 > backdb.sql
+//备份多个数据库
+mysqldump -uroot -hhost -ppassword --databases dbname1, dbname2 > backdb.sql
+//备份系统中所有数据库
+mysqldump -uroot -hhost -ppassword --all-databases > backdb.sql
+
+
+//恢复
+mysql -uroot -p'123456' dbname < backdb.sql 
+
+
+//远程备份与还原
+备份数据库 192.168.3.10 root 123456 test
+mysqldump -h 192.168.3.10 -u root -p123456 test > test.sql
+还原数据库 192.168.3.11 root 123456 test
+mysql -h 192.168.3.11 -P 3306 -u root -p123456 test < test.sql
+~~~
+
+## 备份shell脚本
+
 ~~~
 #!/bin/bash
 
