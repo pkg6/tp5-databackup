@@ -26,10 +26,11 @@ use tp5er\Backup\WriteAbstract;
  * @method static array tables()
  * @method static mixed optimize($tables = null)
  * @method static mixed repair($tables = null)
- * @method static bool apiBackupStep1(array $tables)
- * @method static bool apiBackupStep2($index = 0, $page = 0)
+ * @method static bool backupStep1(array $tables)
+ * @method static bool backupStep2($index = 0, $page = 0)
  * @method static void cleanup()
  * @method static bool import($fileName)
+ * @method static array files()
  */
 class Backup extends Facade
 {

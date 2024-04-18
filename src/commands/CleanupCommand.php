@@ -13,25 +13,20 @@ namespace tp5er\Backup\commands;
 use think\console\Command;
 use think\console\Input;
 use think\console\Output;
-use think\console\Table;
 use tp5er\Backup\facade\Backup;
 
-class ListCommand extends Command
+class CleanupCommand extends Command
 {
     protected function configure()
     {
         // 指令配置
-        $this->setName('backup:list')
-            ->setDescription('List local backups to files');
+        $this->setName('backup:cleanup')
+            ->setDescription('Clear the cache that appears in the backup');
     }
 
     protected function execute(Input $input, Output $output)
     {
-        $list = Backup::files();
-        $table = new Table();
-        $table->setHeader(["name", "database", "connection_name", "filename", "ext", "size"]);
-        $table->setRows($list);
-
-        return $this->table($table);
+        Backup::cleanup();
+        $output->info("清理成功 ");
     }
 }
