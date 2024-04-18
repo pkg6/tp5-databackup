@@ -119,9 +119,10 @@ class Provider implements ProviderInterface
     {
         list($isbackupdata, $createTableSql) = $this->buildSQL->tableStructure($this->connection, $table);
 
-        $sql = PHP_EOL . "--" . PHP_EOL;
-        $sql .= "-- 表的结构 `$table`" . PHP_EOL;
-        $sql .= "-- " . PHP_EOL;
+        $sql = PHP_EOL;
+        $sql .= "-- ----------------------------" . PHP_EOL;
+        $sql .= "-- Table structure for $table" . PHP_EOL;
+        $sql .= "-- ----------------------------" . PHP_EOL;
         $sql .= PHP_EOL;
         $sql .= $createTableSql;
         $sql .= PHP_EOL;
@@ -155,11 +156,17 @@ class Provider implements ProviderInterface
         }
         $sql = "";
         if ($annotation) {
-            $sql .= "--" . PHP_EOL;
-            $sql .= "-- 转存表中的数据 `$table`" . PHP_EOL;
-            $sql .= "-- " . PHP_EOL;
+            $sql .= "-- ----------------------------" . PHP_EOL;
+            $sql .= "-- Records of $table" . PHP_EOL;
+            $sql .= "-- ----------------------------" . PHP_EOL;
         }
-        $sql .= PHP_EOL . $instertSQL;
+        $sql .= PHP_EOL;
+
+        //INSERT INTO 开始事务的方式
+        //$sql .= "BEGIN;";
+        $sql .= $instertSQL;
+        //$sql .= "COMMIT;";
+
         if ($this->write->writeSQL($sql) == false) {
             throw new WriteException($this->write->getFileName());
         }
