@@ -175,11 +175,14 @@ class Provider implements ProviderInterface
     }
 
     /**
-     * @return array
+     * @return FileInfo[]
      */
     public function files()
     {
-        $glob = new \FilesystemIterator($this->filename->getPath(), \FilesystemIterator::KEY_AS_FILENAME);
+        $glob = new \FilesystemIterator(
+            $this->filename->getPath(),
+            \FilesystemIterator::KEY_AS_FILENAME
+        );
         $list = [];
         foreach ($glob as $file) {
             /* var \SplFileInfo $file*/

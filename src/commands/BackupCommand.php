@@ -41,7 +41,7 @@ class BackupCommand extends Command
         $opt = $output->choice($input, "选择操作方式", OPT::opts());
 
         if ($opt == OPT::import) {
-            $this->caseImport($backup, $opt, $output);
+            $this->caseImport($backup, $input, $output);
         } else {
             $this->caseOther($backup, $opt, $input, $output);
         }
@@ -79,7 +79,7 @@ class BackupCommand extends Command
                     }
                     break;
                 case OPT::optimize:
-                    $ret = $backup->backup($backupTable);
+                    $ret = $backup->optimize($backupTable);
                     if ($ret) {
                         $output->info("优化表数据处理完成 ");
                     } else {

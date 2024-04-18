@@ -451,7 +451,7 @@ class BackupManager
     /**
      * 获取所有已备份的文件.
      *
-     * @return array
+     * @return FileInfo[]
      *
      * @throws ClassDefineException
      */
