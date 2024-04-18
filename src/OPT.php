@@ -12,14 +12,18 @@ namespace tp5er\Backup;
 
 final class OPT
 {
-    //备份
-    const backup = "backup";
     //还原
     const import = "import";
+    //备份
+    const backup = "backup";
+    //修复表
+    const repair = "repair";
+    //优化表
+    const optimize = "optimize";
 
     public static function opts()
     {
-        return [OPT::import, OPT::backup];
+        return [OPT::import, OPT::backup,OPT::repair,OPT::optimize];
     }
 
 }

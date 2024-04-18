@@ -14,7 +14,6 @@ use think\Validate;
 use tp5er\Backup\OPT;
 
 /**
- * @package tp5er\Backup\validate
  */
 class BackupValidate extends Validate
 {
@@ -37,6 +36,8 @@ class BackupValidate extends Validate
         OPT::import => ["opt", "database", "filename"],
         //导出的验证数据
         OPT::backup => ["opt", "database", "tables"],
+        OPT::repair => ["opt", "database", "tables"],
+        OPT::optimize => ["opt", "database", "tables"],
     ];
 
 }

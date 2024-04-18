@@ -91,6 +91,10 @@ if ( ! function_exists('backup_run')) {
                 return $backup->backup($data['tables']);
             case \tp5er\Backup\OPT::import:
                 return $backup->import($data['filename']);
+            case \tp5er\Backup\OPT::repair:
+                return  $backup->repair($data['tables']);
+            case \tp5er\Backup\OPT::optimize:
+                return  $backup->optimize($data['tables']);
             default:
                 throw new \tp5er\Backup\exception\TaskException($data);
         }
