@@ -28,31 +28,20 @@ class Provider implements ProviderInterface
      */
     protected $buildSQL;
     /**
-     * @var string
+     * @var FileName
      */
-    protected $path;
+    protected $filename;
 
     /**
-     * @param string $path
+     * @param FileName $fileName
      *
      * @return $this
      */
-    public function setPath($path)
+    public function setFileName(FileName $fileName)
     {
-        if ( ! file_exists($path)) {
-            mkdir($path, 0755, true);
-        }
-        $this->path = $path;
+        $this->filename = $fileName;
 
         return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPath()
-    {
-        return $this->path;
     }
 
     /**
@@ -130,9 +119,10 @@ class Provider implements ProviderInterface
     {
         list($isbackupdata, $createTableSql) = $this->buildSQL->tableStructure($this->connection, $table);
 
-        $sql = PHP_EOL . "--" . PHP_EOL;
-        $sql .= "-- 表的结构 `$table`" . PHP_EOL;
-        $sql .= "-- " . PHP_EOL;
+        $sql = PHP_EOL;
+        $sql .= "-- ----------------------------" . PHP_EOL;
+        $sql .= "-- Table structure for $table" . PHP_EOL;
+        $sql .= "-- ----------------------------" . PHP_EOL;
         $sql .= PHP_EOL;
         $sql .= $createTableSql;
         $sql .= PHP_EOL;
@@ -166,11 +156,17 @@ class Provider implements ProviderInterface
         }
         $sql = "";
         if ($annotation) {
-            $sql .= "--" . PHP_EOL;
-            $sql .= "-- 转存表中的数据 `$table`" . PHP_EOL;
-            $sql .= "-- " . PHP_EOL;
+            $sql .= "-- ----------------------------" . PHP_EOL;
+            $sql .= "-- Records of $table" . PHP_EOL;
+            $sql .= "-- ----------------------------" . PHP_EOL;
         }
-        $sql .= PHP_EOL . $instertSQL;
+        $sql .= PHP_EOL;
+
+        //INSERT INTO 开始事务的方式
+        //$sql .= "BEGIN;";
+        $sql .= $instertSQL;
+        //$sql .= "COMMIT;";
+
         if ($this->write->writeSQL($sql) == false) {
             throw new WriteException($this->write->getFileName());
         }
@@ -183,18 +179,11 @@ class Provider implements ProviderInterface
      */
     public function files()
     {
-        $glob = new \FilesystemIterator($this->path, \FilesystemIterator::KEY_AS_FILENAME);
+        $glob = new \FilesystemIterator($this->filename->getPath(), \FilesystemIterator::KEY_AS_FILENAME);
         $list = [];
-        foreach ($glob as $name => $file) {
+        foreach ($glob as $file) {
             /* var \SplFileInfo $file*/
-            list($database, $connection_name) = self::fileNameDatabaseConnectionNameExt($file);
-            $info["name"] = $name;
-            $info["database"] = $database;
-            $info["connection_name"] = $connection_name;
-            $info["filename"] = $file->getPathname();
-            $info["ext"] = $file->getExtension();
-            $info["size"] = format_bytes($file->getSize());
-            $list[] = $info;
+            $list[] = $this->filename->SplFileInfo($file);
         }
 
         return $list;
@@ -203,44 +192,11 @@ class Provider implements ProviderInterface
     /**
      * @param string|array $sqls
      *
-     * @return int|mixed
+     * @return int
      */
     public function import($sqls)
     {
         return $this->buildSQL->execute($this->connection, $sqls);
     }
 
-    /**
-     * @param $fileName
-     *
-     * @return array
-     */
-    public function fileNameDatabaseConnectionNameExt($fileName)
-    {
-        $path_info = pathinfo($fileName);
-        $ret = explode("-", $path_info["basename"]);
-
-        return [$ret[0] ?: "", $ret[1] ?: "", $path_info["extension"] ?: "", $ret[2] ?: ""];
-    }
-
-    /**
-     * @param $database
-     * @param $connectionName
-     *
-     * @return string
-     */
-    public function generateFileName($database, $connectionName)
-    {
-        return $this->generateFullPathFile($database . "-" . $connectionName . "-" . date("YmdHis"));
-    }
-
-    /**
-     * @param $filename
-     *
-     * @return string
-     */
-    public function generateFullPathFile($filename)
-    {
-        return $this->getPath() . DIRECTORY_SEPARATOR . $filename;
-    }
 }

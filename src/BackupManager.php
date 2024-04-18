@@ -82,6 +82,16 @@ class BackupManager
     }
 
     /**
+     * @return FileName
+     */
+    public function getFileNameObject()
+    {
+        $fileName = new FileName($this, $this->app);
+
+        return $fileName;
+    }
+
+    /**
      * 设置sql语句.
      *
      * @param BuildSQLInterface|null $buildSQL
@@ -124,32 +134,32 @@ class BackupManager
      *
      * @throws ClassDefineException
      */
-    public function getWrite($type = null)
+    public function getWriteObject($writeType = null)
     {
-        if (is_null($type)) {
-            $type = $this->app->config->get("backup.default", "sql");
+        if (is_null($writeType)) {
+            $writeType = $this->app->config->get("backup.default", "sql");
         }
         $backups = $this->app->config->get("backup.backups");
-        if ( ! isset($backups[$type])) {
-            throw new InvalidArgumentException('Undefined backups config:' . $type);
+        if ( ! isset($backups[$writeType])) {
+            throw new InvalidArgumentException('Undefined backups config:' . $writeType);
         }
-        if ( ! isset($backups[$type]["type"])) {
-            throw new InvalidArgumentException('Undefined backups.type config:' . $type);
+        if ( ! isset($backups[$writeType]["type"])) {
+            throw new InvalidArgumentException('Undefined backups.type config:' . $writeType);
         }
-        $backupclass = $backups[$type]["type"];
+        $backupclass = $backups[$writeType]["type"];
         if (class_exists($backupclass)) {
-            $backupObject = new $backupclass;
-            if ( ! is_subclass_of($backupObject, WriteAbstract::class)) {
+            $writeObject = new $backupclass;
+            if ( ! is_subclass_of($writeObject, WriteAbstract::class)) {
                 throw new ClassDefineException($backupclass, WriteAbstract::class);
             }
         } elseif (isset($this->writes[$backupclass])) {
-            $backupObject = new $this->writes[$backupclass];
+            $writeObject = new $this->writes[$backupclass];
         }
-        if (isset($backupObject)) {
-            $backupObject->setApp($this->app);
-            $backupObject->setManager($this);
+        if (isset($writeObject)) {
+            $writeObject->setApp($this->app);
+            $writeObject->setManager($this);
 
-            return $backupObject;
+            return $writeObject;
         }
         throw new InvalidArgumentException("Unable to find {$backupclass} write method");
     }
@@ -199,6 +209,14 @@ class BackupManager
     }
 
     /**
+     * @return string
+     */
+    public function getDatabase()
+    {
+        return $this->database;
+    }
+
+    /**
      * @param ProviderInterface|null $provider
      *
      * @return $this
@@ -210,11 +228,7 @@ class BackupManager
 
         }
         $this->provider = $provider;
-        $path = $this->app
-            ->config
-            ->get("backup.path", $this->app->getRootPath() . "backup");
-        $provider->setPath($path);
-
+        $this->provider->setFileName($this->getFileNameObject());
         $this->provider->setBuildSQL($this->buildSQL);
 
         return $this;
@@ -231,26 +245,27 @@ class BackupManager
      *
      * @throws ClassDefineException
      */
-    public function getProvider($connection = null, $writeType = null)
+    public function getProviderObject($connection = null, $writeType = null)
     {
         if (is_null($connection)) {
             $connection = $this->connectionName;
         }
+        $provider = $this->provider;
         if (is_string($connection)) {
-            $this->provider->setConnection($this->app->get("db")->connect($connection));
+            $provider->setConnection($this->app->get("db")->connect($connection));
         } elseif (is_subclass_of($connection, ConnectionInterface::class)) {
-            $this->provider->setConnection($connection);
+            $provider->setConnection($connection);
         } else {
-            $this->provider->setConnection($this->app->get("db"));
+            $provider->setConnection($this->app->get("db"));
         }
 
         if (is_subclass_of($writeType, WriteAbstract::class)) {
-            $this->provider->setWrite($writeType);
+            $provider->setWrite($writeType);
         } else {
-            $this->provider->setWrite($this->getWrite($writeType));
+            $provider->setWrite($this->getWriteObject($writeType));
         }
 
-        return $this->provider;
+        return $provider;
     }
 
     /**
@@ -262,7 +277,7 @@ class BackupManager
      */
     public function tables()
     {
-        return $this->getProvider()->tables();
+        return $this->getProviderObject()->tables();
     }
 
     /**
@@ -274,7 +289,7 @@ class BackupManager
      */
     public function optimize($tables = null)
     {
-        return $this->getProvider()->optimize($tables);
+        return $this->getProviderObject()->optimize($tables);
     }
 
     /**
@@ -286,7 +301,7 @@ class BackupManager
      */
     public function repair($tables)
     {
-        return $this->getProvider()->repair($tables);
+        return $this->getProviderObject()->repair($tables);
     }
 
     /**
@@ -300,19 +315,20 @@ class BackupManager
      */
     public function backupStep1(array $tables)
     {
-        $filename = $this->provider->generateFileName($this->database, $this->connectionName);
+        $filenameObject = $this->getFileNameObject();
+        $filename = $filenameObject->generateFileName($this->database, $this->connectionName);
         $lockKey = "tp5er.backup.task." . crc32($filename . json_encode($tables));
         if ($this->app->cache->has($lockKey)) {
             throw new LockException($lockKey);
         }
-        $backup = $this->getWrite();
-        $backup->setFileName($filename);
+        $write = $this->getWriteObject();
+        $write->setFileName($filename);
 
         $this->app->cache->tag("tp5er.backup")->set($lockKey, 1);
         $this->app->cache->tag("tp5er.backup")->set("tp5er.backup.file", $filename);
         $this->app->cache->tag("tp5er.backup")->set("tp5er.backup.tables", $tables);
 
-        return $this->sqlCopyright($backup);
+        return $filenameObject->copyright($write);
     }
 
     /**
@@ -334,7 +350,7 @@ class BackupManager
             throw new BackupStepException(2, "Unable to find file cache");
         }
 
-        $write = $this->getWrite();
+        $write = $this->getWriteObject();
         $write->setFileName($filename);
 
         $tables = $this->app->cache->get("tp5er.backup.tables");
@@ -369,6 +385,60 @@ class BackupManager
     }
 
     /**
+     * 备份表数据.
+     *
+     * @param $tables
+     *
+     * @return array
+     *
+     * @throws ClassDefineException
+     * @throws LockException
+     */
+    public function backup($tables)
+    {
+        $ret = [];
+        //任务创建成功
+        if ($this->backupStep1($tables)) {
+            //备份所有表数据
+            foreach ($tables as $index => $table) {
+                //我相信在数据库中不会出现表重复表名吧
+                $lastPage = $this->backupAllData($index);
+                if ($lastPage === 0) {
+                    $ret[$table] = true;
+                } else {
+                    $ret[$table] = false;
+                }
+            }
+        }
+        $this->cleanup();
+
+        return $ret;
+    }
+
+    /**
+     * 备份所有表数据.
+     *
+     * @param $index
+     * @param $page
+     *
+     * @return int
+     *
+     * @throws BackupStepException
+     * @throws ClassDefineException
+     * @throws WriteException
+     */
+    protected function backupAllData($index = 0, $page = 1)
+    {
+        //任务创建成功
+        $lastPage = $this->backupStep2($index, $page);
+        if ($lastPage > 0) {
+            return $this->backupAllData($index, $lastPage);
+        }
+
+        return $lastPage;
+    }
+
+    /**
      * 根据tag清理缓存.
      *
      * @return void
@@ -387,26 +457,26 @@ class BackupManager
      */
     public function files()
     {
-        return $this->getProvider()->files();
+        return $this->getProviderObject()->files();
     }
 
     /**
      * @param $fileName
      *
-     * @return mixed
+     * @return int
      *
      * @throws ClassDefineException
      */
     public function import($fileName)
     {
-        $fileName = $this->provider->generateFullPathFile($fileName);
+        $fileName = $this->getFileNameObject()->generateFullPathFile($fileName);
         if ( ! file_exists($fileName)) {
             throw new FileException($fileName);
         }
-        list($_, $connectionName, $ext, $_) = $this->provider->fileNameDatabaseConnectionNameExt($fileName);
-        $write = $this->getWrite($ext);
+        list($_, $_, $ext, $_) = $this->getFileNameObject()->fileNameDatabaseConnectionNameExt($fileName);
+        $write = $this->getWriteObject($ext);
         $sqls = $write->readSQL($fileName);
-        $provider = $this->getProvider($connectionName, $write);
+        $provider = $this->getProviderObject(null, $write);
 
         return $provider->import($sqls);
     }
@@ -419,11 +489,11 @@ class BackupManager
      *
      * @return mixed
      *
-     * @throws WriteException
+     * @throws WriteException|ClassDefineException
      */
     protected function writeTableStructure(WriteAbstract $write, $table)
     {
-        return $this->getProvider(null, $write)->writeTableStructure($table);
+        return $this->getProviderObject(null, $write)->writeTableStructure($table);
     }
 
     /**
@@ -443,7 +513,7 @@ class BackupManager
     {
         $limit = $this->app->config->get("backup.limit", 100);
 
-        return $this->getProvider(null, $write)->writeTableData($table, $limit, $page, $annotation);
+        return $this->getProviderObject(null, $write)->writeTableData($table, $limit, $page, $annotation);
     }
 
     /**
@@ -452,31 +522,6 @@ class BackupManager
     public function getDatabaseConfig()
     {
         return $this->databaseConfig;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function sqlCopyright(WriteAbstract $write)
-    {
-        $config = $this->getDatabaseConfig();
-        $hostname = Arr::get($config, "hostname");
-        $hostport = Arr::get($config, "hostport");
-        $sql = "-- -----------------------------" . PHP_EOL;
-        $sql .= "-- tp5-databackup SQL Dump " . PHP_EOL;
-        $sql .= "-- version " . $this->getVersion() . PHP_EOL;
-        $sql .= "-- https://github.com/pkg6/tp5-databackup " . PHP_EOL;
-        $sql .= "-- " . PHP_EOL;
-        $sql .= "-- Host     : " . $hostname . PHP_EOL;
-        $sql .= "-- Port     : " . $hostport . PHP_EOL;
-        $sql .= "-- Database : " . $this->database . PHP_EOL;
-        $sql .= "-- PHP Version : " . phpversion() . PHP_EOL;
-        $sql .= "-- Date : " . date("Y-m-d H:i:s") . PHP_EOL;
-        $sql .= "-- -----------------------------" . PHP_EOL . PHP_EOL;
-        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
-        $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;
-
-        return $write->writeSQL($sql);
     }
 
 }
