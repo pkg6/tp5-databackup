@@ -13,11 +13,13 @@
 // +----------------------------------------------------------------------
 namespace tp5er\Backup;
 
+use think\App;
+use think\Db;
+
 /**
  * Class Backup.
  *
  * @deprecated
- * @see BackupManager
  */
 class Backup
 {
@@ -62,8 +64,7 @@ class Backup
     ];
 
     /**
-     * @internal [description]
-     * 数据库备份构造方法
+     * 数据库备份构造方法.
      *
      * @param array $config 备份配置信息
      *
@@ -120,7 +121,7 @@ class Backup
     /**
      * 设置备份文件名.
      *
-     * @param [] $file 文件名字
+     * @param Array $file 文件名字
      *
      * @return $this
      */
@@ -146,7 +147,11 @@ class Backup
      */
     public static function connect()
     {
-        return \think\facade\Db::connect();
+        if (APP::VERSION >= "6.0.0") {
+            return \think\facade\Db::connect();
+        } else {
+            return Db::connect();
+        }
     }
 
     /**
@@ -258,8 +263,12 @@ class Backup
             case 'filepath':
                 return $this->config['path'];
             default:
-                return ['pathname' => "{$this->config['path']}{$this->file['name']}-{$this->file['part']}.sql", 'filename' => "{$this->file['name']}-{$this->file['part']}.sql", 'filepath' => $this->config['path'], 'file' => $this->file];
-                ;
+                return [
+                    'pathname' => "{$this->config['path']}{$this->file['name']}-{$this->file['part']}.sql",
+                    'filename' => "{$this->file['name']}-{$this->file['part']}.sql",
+                    'filepath' => $this->config['path'],
+                    'file' => $this->file
+                ];
         }
     }
 
