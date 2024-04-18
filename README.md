@@ -21,39 +21,67 @@ composer require tp5er/tp5-databackup
 
 > 支持thinkphp6
 
-### 作者已定义好controlle，只需定义一个controller进行继承
+### 使用方式1: 继承 `tp5er\Backup\controller\ApiController`
 
-~~~
-<?php
-namespace app\controller;
-
-use tp5er\Backup\controller\ApiController;
-
-class Index extends ApiController
-{
-
-}
-
-~~~
+> 导出的流程：
+>
+> 1. /index/export发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`
+> 2. /index/export发送get请求/index/export?index=0&page=0,直到page=0表示该数据备份完成
+>
+> 导入流程
+>
+> 1. /index/filelist 拿到name传到/index/import?file=fastadmin-mysql-20240416184903.sql进行还原
 
 #### 接口说明
 
 - /index/tables 获取所有的数据表
-
 - /index/filelist 获取已经备份好的的文件
 - /index/import 导入
 - /index/export 导出
 - /index/repair 修复表
 - /index/optimize 优化表
 
-> 导出的流程：
->
-> 1. /index/export发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`
->2. /index/export发送get请求/index/export?index=0&page=0,直到page=0表示该数据备份完成
->
-> 导入流程
-> 
-> 1. /index/filelist 拿到name传到/index/import?file=fastadmin-mysql-20240416184903.sql进行还原
+### 使用方式2: 通过队列的方法
+
+#### 还原数据
+
+~~~
+$data["database"]="mysql";
+$data["opt"]="import";
+$data["filename"]="fastadmin-mysql-20240416184903.sql";
+backup_queue($data);
+~~~
+
+#### 备份数据/修复表/优化表
+
+~~~
+$data["database"]="mysql";
+$data["opt"]="backup" //backup,repair,optimize;
+$data["table"]=["fa_category","fa_auth_rule"];
+backup_queue($data);
+~~~
+
+### 使用方式3: 通过命令行
+
+~~~
+//进入交互模式进行相关操作
+php think backup:choice
+
+//备份整个数据库表结构和表数据
+php think backup:database
+
+//还原数据
+php think backup:import fastadmin-mysql-20240416184903.sql
+
+//列出所有备份文件
+php think backup:list
+
+//在执行本代码中会使用到缓存这里是清理缓存的命令
+php think backup:cleanup
+~~~
+
+
+
 
 
 
