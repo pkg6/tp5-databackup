@@ -1,57 +1,71 @@
 <?php
-// +----------------------------------------------------------------------
+
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 // | Author: tp5er <tp5er@qq.com>
 // | QQ: 1751212020
 // +----------------------------------------------------------------------
 namespace tp5er\Backup;
 
-use think\Db;
 use think\App;
+use think\Db;
 
 /**
- * Class Backup
- * @package tp5er\Backup
+ * Class Backup.
  */
 class Backup
 {
     /**
-     * 文件指针
+     * 文件指针.
+     *
      * @var resource
      */
     private $fp;
     /**
-     * 备份文件信息 part - 卷号，name - 文件名
+     * 备份文件信息 part - 卷号，name - 文件名.
+     *
      * @var array
      */
     private $file;
     /**
-     * 当前打开文件大小
-     * @var integer
+     * 当前打开文件大小.
+     *
+     * @var int
      */
     private $size = 0;
 
     /**
-     * 数据库配置
-     * @var integer
+     * 数据库配置.
+     *
+     * @var int
      */
-    private $dbconfig = array();
+    private $dbconfig = [];
     /**
-     * 备份配置
-     * @var integer
+     * 备份配置.
+     *
+     * @var int
      */
-    private $config = array(
-        'path'     => '',
+    private $config = [
+        'path' => '',
         //数据库备份路径
-        'part'     => 20971520,
+        'part' => 20971520,
         //数据库备份卷大小
         'compress' => 0,
         //数据库备份文件是否启用压缩 0不压缩 1 压缩
-        'level'    => 9,
-    );
+        'level' => 9,
+    ];
 
     /**
-     * 数据库备份构造方法
+     * 数据库备份构造方法.
+     *
      * @param array $config 备份配置信息
+     *
      * @throws \Exception
      */
     public function __construct($config = [])
@@ -65,26 +79,29 @@ class Backup
         //初始化数据库连接参数
         $this->setDbConn();
         //检查文件是否可写
-        if (!$this->checkPath($this->config['path'])) {
+        if ( ! $this->checkPath($this->config['path'])) {
             throw new \Exception("The current directory is not writable");
         }
     }
 
     /**
      * 设置脚本运行超时时间
-     * 0表示不限制，支持连贯操作
+     * 0表示不限制，支持连贯操作.
      */
     public function setTimeout($time = null)
     {
-        if (!is_null($time)) {
+        if ( ! is_null($time)) {
             set_time_limit($time) || ini_set("max_execution_time", $time);
         }
+
         return $this;
     }
 
     /**
-     * 设置数据库连接必备参数
+     * 设置数据库连接必备参数.
+     *
      * @param array $dbconfig 数据库连接配置信息
+     *
      * @return object
      */
     public function setDbConn($dbconfig = [])
@@ -95,12 +112,15 @@ class Backup
         } else {
             $this->dbconfig = $dbconfig;
         }
+
         return $this;
     }
 
     /**
-     * 设置备份文件名
+     * 设置备份文件名.
+     *
      * @param Array $file 文件名字
+     *
      * @return $this
      */
     public function setFile($file = null)
@@ -108,17 +128,19 @@ class Backup
         if (is_null($file)) {
             $this->file = ['name' => date('Ymd-His'), 'part' => 1];
         } else {
-            if (!array_key_exists("name", $file) && !array_key_exists("part", $file)) {
+            if ( ! array_key_exists("name", $file) && ! array_key_exists("part", $file)) {
                 $this->file = $file['1'];
             } else {
                 $this->file = $file;
             }
         }
+
         return $this;
     }
 
     /**
-     * 数据类连接
+     * 数据类连接.
+     *
      * @return \think\db\ConnectionInterface
      */
     public static function connect()
@@ -131,9 +153,11 @@ class Backup
     }
 
     /**
-     * 数据库表列表
+     * 数据库表列表.
+     *
      * @param $table
      * @param $type
+     *
      * @return array
      */
     public function dataList($table = null, $type = 1)
@@ -148,74 +172,80 @@ class Backup
                 $list = $db->query("show columns from {$table}");
             }
         }
+
         return array_map('array_change_key_case', $list);
         //$list;
     }
 
     /**
-     * 数据库备份文件列表
+     * 数据库备份文件列表.
+     *
      * @return array
      */
     public function fileList()
     {
-        if (!is_dir($this->config['path'])) {
+        if ( ! is_dir($this->config['path'])) {
             mkdir($this->config['path'], 0755, true);
         }
         $path = realpath($this->config['path']);
         $flag = \FilesystemIterator::KEY_AS_FILENAME;
         $glob = new \FilesystemIterator($path, $flag);
-        $list = array();
+        $list = [];
         foreach ($glob as $name => $file) {
             if (preg_match('/^\\d{8,8}-\\d{6,6}-\\d+\\.sql(?:\\.gz)?$/', $name)) {
                 $name1 = $name;
-                $name  = sscanf($name, '%4s%2s%2s-%2s%2s%2s-%d');
-                $date  = "{$name[0]}-{$name[1]}-{$name[2]}";
-                $time  = "{$name[3]}:{$name[4]}:{$name[5]}";
-                $part  = $name[6];
+                $name = sscanf($name, '%4s%2s%2s-%2s%2s%2s-%d');
+                $date = "{$name[0]}-{$name[1]}-{$name[2]}";
+                $time = "{$name[3]}:{$name[4]}:{$name[5]}";
+                $part = $name[6];
                 if (isset($list["{$date} {$time}"])) {
-                    $info         = $list["{$date} {$time}"];
+                    $info = $list["{$date} {$time}"];
                     $info['part'] = max($info['part'], $part);
                     $info['size'] = $info['size'] + $file->getSize();
                 } else {
                     $info['part'] = $part;
                     $info['size'] = $file->getSize();
                 }
-                $extension               = strtoupper(pathinfo($file->getFilename(), PATHINFO_EXTENSION));
-                $info['name']            = $name1;
-                $info['compress']        = $extension === 'SQL' ? '-' : $extension;
-                $info['time']            = strtotime("{$date} {$time}");
+                $extension = strtoupper(pathinfo($file->getFilename(), PATHINFO_EXTENSION));
+                $info['name'] = $name1;
+                $info['compress'] = $extension === 'SQL' ? '-' : $extension;
+                $info['time'] = strtotime("{$date} {$time}");
                 $list["{$date} {$time}"] = $info;
             }
         }
+
         return $list;
     }
 
     /**
      * @param $type
      * @param $time
+     *
      * @return array|false|mixed|string
+     *
      * @throws \Exception
      */
     public function getFile($type = '', $time = 0)
     {
-        if (!is_numeric($time)) {
+        if ( ! is_numeric($time)) {
             throw new \Exception("{$time} Illegal data type");
         }
         switch ($type) {
             case 'time':
                 $name = date('Ymd-His', $time) . '-*.sql*';
                 $path = realpath($this->config['path']) . DIRECTORY_SEPARATOR . $name;
+
                 return glob($path);
             case 'timeverif':
-                $name  = date('Ymd-His', $time) . '-*.sql*';
-                $path  = realpath($this->config['path']) . DIRECTORY_SEPARATOR . $name;
+                $name = date('Ymd-His', $time) . '-*.sql*';
+                $path = realpath($this->config['path']) . DIRECTORY_SEPARATOR . $name;
                 $files = glob($path);
-                $list  = array();
+                $list = [];
                 foreach ($files as $name) {
-                    $basename        = basename($name);
-                    $match           = sscanf($basename, '%4s%2s%2s-%2s%2s%2s-%d');
-                    $gz              = preg_match('/^\\d{8,8}-\\d{6,6}-\\d+\\.sql.gz$/', $basename);
-                    $list[$match[6]] = array($match[6], $name, $gz);
+                    $basename = basename($name);
+                    $match = sscanf($basename, '%4s%2s%2s-%2s%2s%2s-%d');
+                    $gz = preg_match('/^\\d{8,8}-\\d{6,6}-\\d+\\.sql.gz$/', $basename);
+                    $list[$match[6]] = [$match[6], $name, $gz];
                 }
                 $last = end($list);
                 if (count($list) === $last[0]) {
@@ -223,6 +253,7 @@ class Backup
                 } else {
                     throw new \Exception("File {$files['0']} may be damaged, please check again");
                 }
+                // no break
             case 'pathname':
                 return "{$this->config['path']}{$this->file['name']}-{$this->file['part']}.sql";
             case 'filename':
@@ -230,19 +261,22 @@ class Backup
             case 'filepath':
                 return $this->config['path'];
             default:
-                return array(
+                return [
                     'pathname' => "{$this->config['path']}{$this->file['name']}-{$this->file['part']}.sql",
                     'filename' => "{$this->file['name']}-{$this->file['part']}.sql",
                     'filepath' => $this->config['path'],
                     'file' => $this->file
-                );
+                ];
         }
     }
 
     /**
-     * 删除备份文件
+     * 删除备份文件.
+     *
      * @param $time
+     *
      * @return mixed
+     *
      * @throws \Exception
      */
     public function delFile($time)
@@ -261,16 +295,20 @@ class Backup
     }
 
     /**
-     * 下载备份
+     * 下载备份.
+     *
      * @Author: 浪哥 <939881475@qq.com>
+     *
      * @param string $time
-     * @param integer $part
+     * @param int $part
+     *
      * @return array|mixed|string
+     *
      * @throws \Exception
      */
     public function downloadFile($time, $part = 0)
     {
-        $file     = $this->getFile('time', $time);
+        $file = $this->getFile('time', $time);
         $fileName = $file[$part];
         if (file_exists($fileName)) {
             ob_end_clean();
@@ -288,20 +326,22 @@ class Backup
     /**
      * @param $start
      * @param $time
+     *
      * @return array|false|int
+     *
      * @throws \Exception
      */
     public function import($start, $time)
     {
         //还原数据
-        $db         = self::connect();
+        $db = self::connect();
         $this->file = $this->getFile('time', $time);
         if ($this->config['compress']) {
-            $gz   = gzopen($this->file[0], 'r');
+            $gz = gzopen($this->file[0], 'r');
             $size = 0;
         } else {
             $size = filesize($this->file[0]);
-            $gz   = fopen($this->file[0], 'r');
+            $gz = fopen($this->file[0], 'r');
         }
         $sql = '';
         if ($start) {
@@ -320,12 +360,14 @@ class Backup
                 return 0;
             }
         }
-        return array($start, $size);
+
+        return [$start, $size];
     }
 
     /**
-     * 写入初始数据
-     * @return boolean true - 写入成功，false - 写入失败
+     * 写入初始数据.
+     *
+     * @return bool true - 写入成功，false - 写入失败
      */
     public function Backup_Init()
     {
@@ -345,14 +387,17 @@ class Backup
         $sql .= "-- Date : " . date("Y-m-d H:i:s") . "\n";
         $sql .= "-- -----------------------------\n\n";
         $sql .= "SET FOREIGN_KEY_CHECKS = 0;\n\n";
+
         return $this->write($sql);
     }
 
     /**
-     * 备份表结构
+     * 备份表结构.
+     *
      * @param string $table 表名
-     * @param integer $start 起始行数
-     * @return boolean        false - 备份失败
+     * @param int $start 起始行数
+     *
+     * @return bool        false - 备份失败
      */
     public function backup($table, $start)
     {
@@ -361,7 +406,7 @@ class Backup
         if (0 == $start) {
             $result = $db->query("SHOW CREATE TABLE `{$table}`");
             //视图数据 不进行备份
-            if (!empty($result[0]["Create View"])) {
+            if ( ! empty($result[0]["Create View"])) {
                 return 0;
             }
             $sql = "\n";
@@ -376,7 +421,7 @@ class Backup
         }
         //数据总数
         $result = $db->query("SELECT COUNT(*) AS count FROM `{$table}`");
-        $count  = $result['0']['count'];
+        $count = $result['0']['count'];
         //备份表数据
         if ($count) {
             //写入数据注释
@@ -393,10 +438,10 @@ class Backup
                 foreach ($row as $val) {
                     if (is_numeric($val)) {
                         $values[] = $val;
-                    } else if (is_null($val)) {
+                    } elseif (is_null($val)) {
                         $values[] = 'NULL';
                     } else {
-                        $values[] = "'" . str_replace(array("\r", "\n"), array('\\r', '\\n'), addslashes($val)) . "'";
+                        $values[] = "'" . str_replace(["\r", "\n"], ['\\r', '\\n'], addslashes($val)) . "'";
                     }
                 }
                 $sql = "INSERT INTO `{$table}` VALUES (" . implode(", ", $values) . ");\n";
@@ -410,14 +455,18 @@ class Backup
                 return $this->backup($table, $start + 1000);
             }
         }
+
         //备份下一表
         return 0;
     }
 
     /**
-     * 优化表
+     * 优化表.
+     *
      * @param String $tables 表名
+     *
      * @return String $tables
+     *
      * @throws \Exception
      */
     public function optimize($tables = null)
@@ -426,7 +475,7 @@ class Backup
             $db = self::connect();
             if (is_array($tables)) {
                 $tables = implode('`,`', $tables);
-                $list   = $db->query("OPTIMIZE TABLE `{$tables}`");
+                $list = $db->query("OPTIMIZE TABLE `{$tables}`");
             } else {
                 $list = $db->query("OPTIMIZE TABLE `{$tables}`");
             }
@@ -441,9 +490,12 @@ class Backup
     }
 
     /**
-     * 修复表
+     * 修复表.
+     *
      * @param String $tables 表名
+     *
      * @return String $tables
+     *
      * @throws \Exception
      */
     public function repair($tables = null)
@@ -452,7 +504,7 @@ class Backup
             $db = self::connect();
             if (is_array($tables)) {
                 $tables = implode('`,`', $tables);
-                $list   = $db->query("REPAIR TABLE `{$tables}`");
+                $list = $db->query("REPAIR TABLE `{$tables}`");
             } else {
                 $list = $db->query("REPAIR TABLE `{$tables}`");
             }
@@ -467,9 +519,11 @@ class Backup
     }
 
     /**
-     * 写入SQL语句
+     * 写入SQL语句.
+     *
      * @param string $sql 要写入的SQL语句
-     * @return boolean     true - 写入成功，false - 写入失败！
+     *
+     * @return bool     true - 写入成功，false - 写入失败！
      */
     private function write($sql)
     {
@@ -478,12 +532,14 @@ class Backup
         //一般情况压缩率都会高于50%；
         $size = $this->config['compress'] ? $size / 2 : $size;
         $this->open($size);
+
         return $this->config['compress'] ? @gzwrite($this->fp, $sql) : @fwrite($this->fp, $sql);
     }
 
     /**
-     * 打开一个卷，用于写入数据
-     * @param integer $size 写入数据的大小
+     * 打开一个卷，用于写入数据.
+     *
+     * @param int $size 写入数据的大小
      */
     private function open($size)
     {
@@ -498,7 +554,7 @@ class Backup
             }
         } else {
             $backuppath = $this->config['path'];
-            $filename   = "{$backuppath}{$this->file['name']}-{$this->file['part']}.sql";
+            $filename = "{$backuppath}{$this->file['name']}-{$this->file['part']}.sql";
             if ($this->config['compress']) {
                 $filename = "{$filename}.gz";
                 $this->fp = @gzopen($filename, "a{$this->config['level']}");
@@ -510,9 +566,11 @@ class Backup
     }
 
     /**
-     * 检查目录是否可写
+     * 检查目录是否可写.
+     *
      * @param string $path 目录
-     * @return boolean
+     *
+     * @return bool
      */
     protected function checkPath($path)
     {
@@ -527,7 +585,7 @@ class Backup
     }
 
     /**
-     * 析构方法，用于关闭文件资源
+     * 析构方法，用于关闭文件资源.
      */
     public function __destruct()
     {

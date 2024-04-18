@@ -1,0 +1,13 @@
+* text=auto
+
+/http export-ignore
+/tests export-ignore
+/tp5-demo export-ignore
+/tp6-controller export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+phpunit.php export-ignore
+phpunit.xml.dist export-ignore
+phpunit.xml export-ignore
+.php_cs export-ignore
+.php-cs-fixer.php export-ignore
