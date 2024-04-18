@@ -96,6 +96,7 @@ class FileInfo implements Arrayable, Jsonable
         foreach ($properties as $property) {
             $ret[$property] = $this->$property;
         }
+
         return $ret;
     }
 

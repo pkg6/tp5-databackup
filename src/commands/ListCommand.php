@@ -34,6 +34,7 @@ class ListCommand extends Command
             $row[] = $item->toArray();
         }
         $table->setRows($row);
+
         return $this->table($table);
     }
 }

@@ -14,13 +14,17 @@ use InvalidArgumentException;
 use think\App;
 use think\db\ConnectionInterface;
 use think\helper\Arr;
+use tp5er\Backup\build\BuildSQLInterface;
 use tp5er\Backup\build\Mysql;
 use tp5er\Backup\exception\BackupStepException;
 use tp5er\Backup\exception\ClassDefineException;
 use tp5er\Backup\exception\FileException;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\exception\WriteException;
+use tp5er\Backup\provider\Provider;
+use tp5er\Backup\provider\ProviderInterface;
 use tp5er\Backup\write\SQLFileWrite;
+use tp5er\Backup\write\WriteAbstract;
 
 class BackupManager
 {

@@ -8,10 +8,14 @@
  * This source file is subject to the MIT license that is bundled.
  */
 
-namespace tp5er\Backup;
+namespace tp5er\Backup\provider;
 
 use think\db\ConnectionInterface;
+use tp5er\Backup\build\BuildSQLInterface;
 use tp5er\Backup\exception\WriteException;
+use tp5er\Backup\FileInfo;
+use tp5er\Backup\FileName;
+use tp5er\Backup\write\WriteAbstract;
 
 class Provider implements ProviderInterface
 {

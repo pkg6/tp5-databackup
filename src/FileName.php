@@ -12,6 +12,7 @@ namespace tp5er\Backup;
 
 use think\App;
 use think\helper\Arr;
+use tp5er\Backup\write\WriteAbstract;
 
 class FileName
 {

@@ -11,7 +11,6 @@
 namespace tp5er\Backup\write;
 
 use tp5er\Backup\exception\FileException;
-use tp5er\Backup\WriteAbstract;
 
 class SQLFileWrite extends WriteAbstract
 {

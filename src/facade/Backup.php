@@ -12,10 +12,10 @@ namespace tp5er\Backup\facade;
 
 use think\Facade;
 use tp5er\Backup\BackupManager;
-use tp5er\Backup\BuildSQLInterface;
+use tp5er\Backup\build\BuildSQLInterface;
 use tp5er\Backup\FileInfo;
-use tp5er\Backup\ProviderInterface;
-use tp5er\Backup\WriteAbstract;
+use tp5er\Backup\provider\ProviderInterface;
+use tp5er\Backup\write\WriteAbstract;
 
 /**
  * Class Backup.
