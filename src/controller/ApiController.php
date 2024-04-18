@@ -34,7 +34,7 @@ class ApiController
      */
     public function filelist()
     {
-        $list = Backup::fileList();
+        $list = Backup::files();
 
         return $this->success($list, '拉去本地文件成功');
     }
@@ -69,7 +69,7 @@ class ApiController
                 return $this->error($validate->getError());
             }
             try {
-                if (Backup::apiBackupStep1($data["tables"])) {
+                if (Backup::backupStep1($data["tables"])) {
                     return $this->success(['index' => 0, 'page' => 1], '初始化成功！');
                 }
             } catch (LockException $exception) {
@@ -83,7 +83,7 @@ class ApiController
                 return $this->error($validate->getError());
             }
             $index = (int) $data["index"];
-            $lastPage = Backup::apiBackupStep2($index, $data["page"]);
+            $lastPage = Backup::backupStep2($index, $data["page"]);
             if ($lastPage == 0) {
                 //所有的备份完成之后进行清理资源
                 //Backup::cleanup();

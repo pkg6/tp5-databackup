@@ -231,26 +231,23 @@ class BackupManager
      *
      * @throws ClassDefineException
      */
-    public function provider($connection = null, $writeType = null)
+    public function getProvider($connection = null, $writeType = null)
     {
         if (is_null($connection)) {
             $connection = $this->connectionName;
         }
         if (is_string($connection)) {
-            $tpConnect = $this->app->get("db")->connect($connection);
-            $this->provider->setConnection($tpConnect);
+            $this->provider->setConnection($this->app->get("db")->connect($connection));
         } elseif (is_subclass_of($connection, ConnectionInterface::class)) {
             $this->provider->setConnection($connection);
         } else {
-            $tpConnect = $this->app->get("db");
-            $this->provider->setConnection($tpConnect);
+            $this->provider->setConnection($this->app->get("db"));
         }
 
         if (is_subclass_of($writeType, WriteAbstract::class)) {
             $this->provider->setWrite($writeType);
         } else {
-            $write = $this->getWrite($writeType);
-            $this->provider->setWrite($write);
+            $this->provider->setWrite($this->getWrite($writeType));
         }
 
         return $this->provider;
@@ -265,7 +262,7 @@ class BackupManager
      */
     public function tables()
     {
-        return $this->provider()->tables();
+        return $this->getProvider()->tables();
     }
 
     /**
@@ -277,7 +274,7 @@ class BackupManager
      */
     public function optimize($tables = null)
     {
-        return $this->provider()->optimize($tables);
+        return $this->getProvider()->optimize($tables);
     }
 
     /**
@@ -289,7 +286,7 @@ class BackupManager
      */
     public function repair($tables)
     {
-        return $this->provider()->repair($tables);
+        return $this->getProvider()->repair($tables);
     }
 
     /**
@@ -301,7 +298,7 @@ class BackupManager
      *
      * @throws LockException|ClassDefineException
      */
-    public function apiBackupStep1(array $tables)
+    public function backupStep1(array $tables)
     {
         $filename = $this->provider->generateFileName($this->database, $this->connectionName);
         $lockKey = "tp5er.backup.task." . crc32($filename . json_encode($tables));
@@ -319,16 +316,6 @@ class BackupManager
     }
 
     /**
-     * 根据tag清理缓存.
-     *
-     * @return void
-     */
-    public function cleanup()
-    {
-        $this->app->cache->tag("tp5er.backup")->clear();
-    }
-
-    /**
      * 备份数据第二步.
      *
      * @param int $index
@@ -340,19 +327,21 @@ class BackupManager
      * @throws ClassDefineException
      * @throws WriteException
      */
-    public function apiBackupStep2($index = 0, $page = 0)
+    public function backupStep2($index = 0, $page = 0)
     {
-        $write = $this->getWrite();
         $filename = $this->app->cache->get("tp5er.backup.file");
-
         if ( ! $this->app->cache->has("tp5er.backup.file")) {
             throw new BackupStepException(2, "Unable to find file cache");
         }
+
+        $write = $this->getWrite();
         $write->setFileName($filename);
+
         $tables = $this->app->cache->get("tp5er.backup.tables");
         $table = $tables[$index];
         $cahceKey = "tp5er.backup." . $filename . ".page." . $table;
         if ($this->app->cache->has($cahceKey)) {
+            // 有此缓存在标识我认为你已经备份完表结果以及部分数据
             $lastPage = $this->writeTableData($write, $table, $page, false);
             if ((int) $lastPage === 0) {
                 $this->app->cache->delete($cahceKey);
@@ -362,9 +351,9 @@ class BackupManager
 
             return $lastPage;
         } else {
-            // 首先备份表结构和数据
-            $isbackupdata = $this->writeTableStructure($write, $table);
-            if ($isbackupdata) {
+            // 首先进行备份表结果，然后判断是否进行备份表数据
+            $isBackupdata = $this->writeTableStructure($write, $table);
+            if ($isBackupdata) {
                 $lastPage = $this->writeTableData($write, $table, $page);
                 if ((int) $lastPage === 0) {
                     $this->app->cache->delete($cahceKey);
@@ -377,6 +366,28 @@ class BackupManager
         }
 
         return 0;
+    }
+
+    /**
+     * 根据tag清理缓存.
+     *
+     * @return void
+     */
+    public function cleanup()
+    {
+        $this->app->cache->tag("tp5er.backup")->clear();
+    }
+
+    /**
+     * 获取所有已备份的文件.
+     *
+     * @return array
+     *
+     * @throws ClassDefineException
+     */
+    public function files()
+    {
+        return $this->getProvider()->files();
     }
 
     /**
@@ -395,21 +406,9 @@ class BackupManager
         list($_, $connectionName, $ext, $_) = $this->provider->fileNameDatabaseConnectionNameExt($fileName);
         $write = $this->getWrite($ext);
         $sqls = $write->readSQL($fileName);
-        $provider = $this->provider($connectionName, $write);
+        $provider = $this->getProvider($connectionName, $write);
 
         return $provider->import($sqls);
-    }
-
-    /**
-     * 获取所有已备份的文件.
-     *
-     * @return array
-     *
-     * @throws ClassDefineException
-     */
-    public function fileList()
-    {
-        return $this->provider()->files();
     }
 
     /**
@@ -424,7 +423,7 @@ class BackupManager
      */
     protected function writeTableStructure(WriteAbstract $write, $table)
     {
-        return $this->provider(null, $write)->writeTableStructure($table);
+        return $this->getProvider(null, $write)->writeTableStructure($table);
     }
 
     /**
@@ -442,9 +441,9 @@ class BackupManager
      */
     protected function writeTableData(WriteAbstract $write, $table, $page, $annotation = true)
     {
-        $limit = $this->app->config->get("backup.limit", 10);
+        $limit = $this->app->config->get("backup.limit", 100);
 
-        return $this->provider(null, $write)->writeTableData($table, $limit, $page, $annotation);
+        return $this->getProvider(null, $write)->writeTableData($table, $limit, $page, $annotation);
     }
 
     /**

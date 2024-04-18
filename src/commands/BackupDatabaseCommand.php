@@ -36,7 +36,7 @@ class BackupDatabaseCommand extends Command
         $tables = array_column($table, 'Name');
         try {
             //创建任务
-            if ($backup->apiBackupStep1($tables)) {
+            if ($backup->backupStep1($tables)) {
                 foreach ($tables as $index => $table) {
                     //任务创建成功
                     $lastPage = $this->backup2($backup, $index);
@@ -70,7 +70,7 @@ class BackupDatabaseCommand extends Command
     protected function backup2(BackupManager $manager, $index = 0, $page = 1)
     {
         //任务创建成功
-        $lastPage = $manager->apiBackupStep2($index, $page);
+        $lastPage = $manager->backupStep2($index, $page);
         if ($lastPage > 0) {
             return $this->backup2($manager, $index, $lastPage);
         }
