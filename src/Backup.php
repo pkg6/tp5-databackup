@@ -230,7 +230,12 @@ class Backup
             case 'filepath':
                 return $this->config['path'];
             default:
-                return array('pathname' => "{$this->config['path']}{$this->file['name']}-{$this->file['part']}.sql", 'filename' => "{$this->file['name']}-{$this->file['part']}.sql", 'filepath' => $this->config['path'], 'file' => $this->file);;
+                return array(
+                    'pathname' => "{$this->config['path']}{$this->file['name']}-{$this->file['part']}.sql",
+                    'filename' => "{$this->file['name']}-{$this->file['part']}.sql",
+                    'filepath' => $this->config['path'],
+                    'file' => $this->file
+                );
         }
     }
 
