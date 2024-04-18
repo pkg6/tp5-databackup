@@ -12,14 +12,22 @@ namespace tp5er\Backup\controller;
 
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\facade\Backup;
-use tp5er\Backup\Response;
 use tp5er\Backup\validate\ExportValidate;
 
+/**
+ * 作者是将此控制器继承在Index.php中,所以路由/index/*
+ * Class ApiController.
+ */
 class ApiController
 {
     use Response;
 
-    //http://127.0.0.1:8000/index/tables
+    /**
+     * 获取所有的数据表
+     * /index/tables.
+     *
+     * @return \think\Response
+     */
     public function tables()
     {
         $list = Backup::tables();
@@ -28,7 +36,8 @@ class ApiController
     }
 
     /**
-     * http://127.0.0.1:8000/index/filelist.
+     * 获取所有备份文件
+     * /index/filelist.
      *
      * @return \think\Response
      */
@@ -41,7 +50,7 @@ class ApiController
 
     /**
      * 导入
-     * http://127.0.0.1:8000/index/import?file=fastadmin-mysql-20240416184903.sql.
+     * /index/import?file=fastadmin-mysql-20240416184903.sql.
      *
      * @return \think\Response
      */
@@ -57,8 +66,14 @@ class ApiController
         }
     }
 
-    //导出
-    //http://127.0.0.1:8000/index/export
+    /**
+     * 导出
+     * 1. 提交备份任务：/index/export发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`
+     * 2. 发送备份数据请求：/index/export发送get请求/index/export?index=0&page=0,直到page=0表示该数据备份完成
+     * 3. 备份完成：/index/cleanup 发送请求，全部备份已经完成.
+     *
+     * @return \think\Response|void
+     */
     public function export()
     {
         $validate = new ExportValidate();
@@ -85,8 +100,6 @@ class ApiController
             $index = (int) $data["index"];
             $lastPage = Backup::backupStep2($index, $data["page"]);
             if ($lastPage == 0) {
-                //所有的备份完成之后进行清理资源
-                //Backup::cleanup();
                 return $this->success(['index' => $index + 1, 'page' => $lastPage], '备份完毕！');
             } else {
                 return $this->success(['index' => $index, 'page' => $lastPage], '需要继续进行备份数据！');
@@ -94,10 +107,30 @@ class ApiController
         }
     }
 
-    //修复表
+    /**
+     * 整个库备份完之后清理缓存
+     * /index/cleanup.
+     *
+     * @return \think\Response
+     *
+     * @see export
+     */
+    public function cleanup()
+    {
+        Backup::cleanup();
+
+        return $this->success([], '整库备份完毕！');
+    }
+
+    /**
+     * 修复表
+     * /index/repair.
+     *
+     * @return \think\Response
+     */
     public function repair()
     {
-        $tables = request()->param("tables");
+        $tables = request()->post("tables");
         if (Backup::repair($tables)) {
             return $this->success("数据表修复完成！");
         } else {
@@ -105,10 +138,15 @@ class ApiController
         }
     }
 
-    //优化表
+    /**
+     * 优化表
+     * /index/optimize.
+     *
+     * @return \think\Response
+     */
     public function optimize()
     {
-        $tables = request()->param("tables");
+        $tables = request()->post("tables");
         if (Backup::optimize($tables)) {
             return $this->success("数据表优化完成！");
         } else {

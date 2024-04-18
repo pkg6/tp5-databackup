@@ -4,9 +4,9 @@
 
 ## 重要的事情说三遍！！！重要的事情说三遍！！！重要的事情说三遍！！！
 
-> 1. 即将发布2.1版本，与以往有很大的差别，不过提供三种方式进行数据库备份还原优化修复操作
-> 2. pkg6都是作者自己一个人在维护，欢迎提交pull request 减少本人的精力
-> 3. 作者使用的php版本是php7.4，目测写的方法兼容8以上，如果不兼容，可以提交pull request，记得写一下注释哦！！！
+> 1. 即将发布2.1版本，与以往(就一个类`Backup`可用，但是已标记废弃)有很大的差别，不过提供三种方式进行数据库备份还原优化修复操作
+> 2. [pkg6](https://github.com/pkg6)都是作者自己一个人在维护，欢迎提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 减少本人的精力
+> 3. 作者使用的php版本是php7.4，目测写的方法兼容8以上，如果不兼容，可以提交[pull request](https://github.com/pkg6/tp5-databackup/pulls)，记得写一下注释哦！！！
 > 4. 通过队列或命令行的方式，再也不用担心数据备份不完整
 
 
@@ -18,27 +18,11 @@
 composer require tp5er/tp5-databackup
 ~~~
 
-> 支持thinkphp6
-
 ### 使用方式1: 继承 `tp5er\Backup\controller\ApiController`
 
-> 导出的流程：
+> 重要的事情说三遍！！！重要的事情说三遍！！！重要的事情说三遍！！！
 >
-> 1. /index/export发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`
-> 2. /index/export发送get请求/index/export?index=0&page=0,直到page=0表示该数据备份完成
->
-> 导入流程
->
-> 1. /index/filelist 拿到name传到/index/import?file=fastadmin-mysql-20240416184903.sql进行还原
-
-#### 接口说明
-
-- /index/tables 获取所有的数据表
-- /index/filelist 获取已经备份好的的文件
-- /index/import 导入
-- /index/export 导出
-- /index/repair 修复表
-- /index/optimize 优化表
+> 在thinkphp框架中定义一个控制器，然后继承`tp5er\Backup\controller\ApiController`，然后跳转到`ApiController`控制器中查看方法，都是中国人看的懂中国话。
 
 ### 使用方式2: 通过队列的方法
 
@@ -79,12 +63,24 @@ php think backup:list
 php think backup:cleanup
 ~~~
 
+## 目录说明
 
+- build 存放sql语句，目前支持mysql，主要是有其他需求需要备份其他数据库的操作，可以自行实现
+- commands 命令脚本目录
+- controller 案例控制器，可以直接继承并重写
+- exception 在处理中出现的异常
+- provider中的是基础方法，都将在`BackupManager.php`具体实现
+- Task 队列方式
+- validate 参数验证
+- write 写入的方式，目前是sql文件，其他写入需求可以，比如数据库迁移
+- BackupManager.php 所有的相关操作都在这里
+- FileInfo.php 文件读取之后基本信息
+- FileName.php 文件名由于是系统自动生成的所以需要一个类来进行维护并关联到FileInfo.php这个类的数据
+- OPT.php 定义操作常量
 
+## 其他手段进行数据备份还原
 
-
-
-## mysql常见命令
+### mysql常见命令
 
 ~~~
 
@@ -109,7 +105,7 @@ mysqldump -h 192.168.3.10 -u root -p123456 test > test.sql
 mysql -h 192.168.3.11 -P 3306 -u root -p123456 test < test.sql
 ~~~
 
-## 备份shell脚本
+### 备份shell脚本
 
 ~~~
 #!/bin/bash
