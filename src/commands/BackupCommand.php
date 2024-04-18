@@ -14,6 +14,7 @@ use think\console\Command;
 use think\console\Input;
 use think\console\Output;
 use tp5er\Backup\facade\Backup;
+use tp5er\Backup\OPT;
 
 class BackupCommand extends Command
 {
@@ -36,10 +37,10 @@ class BackupCommand extends Command
         $database = $output->choice($input, "选择需要操作的数据库连接", array_keys($databaseConnections));
         $backup = Backup::database($database);
 
-        $opt = $output->choice($input, "请选择是backup还是import", ["backup", "import"]);
+        $opt = $output->choice($input, "请选择是backup还是import", OPT::opts());
 
         switch ($opt) {
-            case "backup":
+            case OPT::backup:
                 //选择需要做做的表
                 $db_table = $backup->tables();
                 $tables = array_column($db_table, 'Name');
@@ -72,7 +73,7 @@ class BackupCommand extends Command
                     $output->error("数据表备份失败 err=" . $exception->getMessage());
                 }
                 break;
-            case "import":
+            case OPT::import:
                 $files = array_column($backup->files(), "name");
                 if (count($files) <= 0) {
                     $output->error("没有可以选择的备份文件");
