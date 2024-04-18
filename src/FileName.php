@@ -12,6 +12,7 @@ namespace tp5er\Backup;
 
 use think\App;
 use think\helper\Arr;
+use tp5er\Backup\write\WriteAbstract;
 
 class FileName
 {
@@ -19,7 +20,7 @@ class FileName
     /**
      * @var BackupManager
      */
-    protected $manager;
+    public $manager;
 
     /**
      * @param BackupManager $manager
@@ -53,24 +54,11 @@ class FileName
     /**
      * @param \SplFileInfo $file
      *
-     * @return array|void
+     * @return FileInfo
      */
     public function SplFileInfo(\SplFileInfo $file)
     {
-        list($database, $connection_name, $extension, $timeExt) = $this->fileNameDatabaseConnectionNameExt($file);
-        $exts = $this->manager->writes;
-        if ( ! isset($exts[$extension])) {
-            return;
-        }
-        $info["name"] = $file->getFilename();
-        $info["database"] = $database;
-        $info["connection_name"] = $connection_name;
-        $info["filename"] = $file->getPathname();
-        $info["ext"] = $extension;
-        $info["class"] = $exts[$extension];
-        $info["size"] = format_bytes($file->getSize());
-
-        return $info;
+        return new FileInfo($file, $this);
     }
 
     /**

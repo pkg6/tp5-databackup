@@ -15,6 +15,7 @@ use think\console\Input;
 use think\console\Output;
 use think\console\Table;
 use tp5er\Backup\facade\Backup;
+use tp5er\Backup\FileInfo;
 
 class ListCommand extends Command
 {
@@ -27,10 +28,12 @@ class ListCommand extends Command
 
     protected function execute(Input $input, Output $output)
     {
-        $list = Backup::files();
         $table = new Table();
-        $table->setHeader(["name", "database", "connection_name", "filename", "ext", "size"]);
-        $table->setRows($list);
+        $table->setHeader(FileInfo::Properties());
+        foreach (Backup::files() as $item) {
+            $row[] = $item->toArray();
+        }
+        $table->setRows($row);
 
         return $this->table($table);
     }

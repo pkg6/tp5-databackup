@@ -8,9 +8,10 @@
  * This source file is subject to the MIT license that is bundled.
  */
 
-namespace tp5er\Backup;
+namespace tp5er\Backup\write;
 
 use think\App;
+use tp5er\Backup\BackupManager;
 
 abstract class WriteAbstract
 {

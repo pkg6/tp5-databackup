@@ -11,7 +11,6 @@
 namespace tp5er\Backup\build;
 
 use think\db\ConnectionInterface;
-use tp5er\Backup\BuildSQLInterface;
 use tp5er\Backup\exception\SQLExecuteException;
 
 class Mysql implements BuildSQLInterface

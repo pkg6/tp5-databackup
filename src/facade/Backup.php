@@ -12,9 +12,10 @@ namespace tp5er\Backup\facade;
 
 use think\Facade;
 use tp5er\Backup\BackupManager;
-use tp5er\Backup\BuildSQLInterface;
-use tp5er\Backup\ProviderInterface;
-use tp5er\Backup\WriteAbstract;
+use tp5er\Backup\build\BuildSQLInterface;
+use tp5er\Backup\FileInfo;
+use tp5er\Backup\provider\ProviderInterface;
+use tp5er\Backup\write\WriteAbstract;
 
 /**
  * Class Backup.
@@ -31,7 +32,7 @@ use tp5er\Backup\WriteAbstract;
  * @method static bool backupStep2($index = 0, $page = 0)
  * @method static void cleanup()
  * @method static bool import($fileName)
- * @method static array files()
+ * @method static FileInfo[] files()
  */
 class Backup extends Facade
 {
