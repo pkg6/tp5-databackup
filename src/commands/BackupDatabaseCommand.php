@@ -14,7 +14,6 @@ use think\console\Command;
 use think\console\Input;
 use think\console\input\Argument;
 use think\console\Output;
-use tp5er\Backup\BackupManager;
 use tp5er\Backup\facade\Backup;
 
 class BackupDatabaseCommand extends Command
@@ -35,46 +34,17 @@ class BackupDatabaseCommand extends Command
         $table = $backup->tables();
         $tables = array_column($table, 'Name');
         try {
-            //创建任务
-            if ($backup->backupStep1($tables)) {
-                foreach ($tables as $index => $table) {
-                    //任务创建成功
-                    $lastPage = $this->backup2($backup, $index);
-                    if ($lastPage === 0) {
-                        $output->info("表结构与表数据备份完成 " . $table);
-                    } else {
-                        $output->error("数据表备份失败 " . $table);
-                        $backup->cleanup();
-                    }
+            $tableRun = $backup->backup($tables);
+            foreach ($tableRun as $table => $ret) {
+                if ($ret) {
+                    $output->info("表结构与表数据备份完成 " . $table);
+                } else {
+                    $output->error("数据表备份失败 " . $table);
                 }
             }
-            $backup->cleanup();
         } catch (\Exception $exception) {
             $output->error($exception->getMessage());
         }
     }
 
-    /**
-     * 备份单表结果与数据.
-     *
-     * @param BackupManager $manager
-     * @param $index
-     * @param $page
-     *
-     * @return int
-     *
-     * @throws \tp5er\Backup\exception\BackupStepException
-     * @throws \tp5er\Backup\exception\ClassDefineException
-     * @throws \tp5er\Backup\exception\WriteException
-     */
-    protected function backup2(BackupManager $manager, $index = 0, $page = 1)
-    {
-        //任务创建成功
-        $lastPage = $manager->backupStep2($index, $page);
-        if ($lastPage > 0) {
-            return $this->backup2($manager, $index, $lastPage);
-        }
-
-        return $lastPage;
-    }
 }

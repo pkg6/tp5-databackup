@@ -14,14 +14,13 @@ use think\db\ConnectionInterface;
 
 interface ProviderInterface
 {
+
     /**
-     * 设置备份目录.
+     * @param FileName $fileName
      *
-     * @param $path
-     *
-     * @return mixed
+     * @return $this
      */
-    public function setPath($path);
+    public function setFileName(FileName $fileName);
 
     /**
      * 设置写入方式.
@@ -111,33 +110,5 @@ interface ProviderInterface
      * @return mixed
      */
     public function import($sqls);
-
-    /**
-     * 生成文件名.
-     *
-     * @param $database
-     * @param $connectionName
-     *
-     * @return string
-     */
-    public function generateFileName($database, $connectionName);
-
-    /**
-     * 生成完整路径.
-     *
-     * @param $filename
-     *
-     * @return string
-     */
-    public function generateFullPathFile($filename);
-
-    /**
-     * 将文件名进行切割得到Database ConnectionName,日期+文件后缀,文件后缀
-     *
-     * @param $fileName
-     *
-     * @return array
-     */
-    public function fileNameDatabaseConnectionNameExt($fileName);
 
 }
