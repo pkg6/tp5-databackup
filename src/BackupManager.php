@@ -18,7 +18,7 @@ use tp5er\Backup\build\BuildSQLInterface;
 use tp5er\Backup\build\Mysql;
 use tp5er\Backup\exception\BackupStepException;
 use tp5er\Backup\exception\ClassDefineException;
-use tp5er\Backup\exception\FileException;
+use tp5er\Backup\exception\FileNotException;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\exception\WriteException;
 use tp5er\Backup\provider\Provider;
@@ -475,7 +475,7 @@ class BackupManager
     {
         $fileName = $this->getFileNameObject()->generateFullPathFile($fileName);
         if ( ! file_exists($fileName)) {
-            throw new FileException($fileName);
+            throw new FileNotException($fileName);
         }
         list($_, $_, $ext, $_) = $this->getFileNameObject()->fileNameDatabaseConnectionNameExt($fileName);
         $write = $this->getWriteObject($ext);

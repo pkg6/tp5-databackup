@@ -33,7 +33,9 @@ class ListCommand extends Command
         foreach (Backup::files() as $item) {
             $row[] = $item->toArray();
         }
-        $table->setRows($row);
+        if (isset($row)) {
+            $table->setRows($row);
+        }
 
         return $this->table($table);
     }

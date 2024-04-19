@@ -10,11 +10,12 @@
 
 namespace tp5er\Backup\exception;
 
-class FileException extends \RuntimeException
+class FileNameExplodeException extends \Exception
 {
+
+    public $reason = "File format parsing failed. The possible reason is an old version or a custom file in the directory.";
     public function __construct($file)
     {
-        parent::__construct(sprintf("Unable to find %s file", $file));
+        parent::__construct(sprintf("`%s` File parsing failed", $file));
     }
-
 }
