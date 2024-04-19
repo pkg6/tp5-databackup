@@ -50,9 +50,9 @@ if ( ! function_exists('backup_queue')) {
         if (backup_validate($data)) {
             $queueObject = app()->get("queue");
             if ($delay > 0) {
-                $queueObject->later($delay, \tp5er\Backup\Task\Job::class, $data, $queue);
+                $queueObject->later($delay, \tp5er\Backup\task\Job::class, $data, $queue);
             } else {
-                $queueObject->push(\tp5er\Backup\Task\Job::class, $data, $queue);
+                $queueObject->push(\tp5er\Backup\task\Job::class, $data, $queue);
             }
         }
 

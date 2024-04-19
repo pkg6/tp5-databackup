@@ -70,7 +70,7 @@ php think backup:cleanup
 - controller 案例控制器，可以直接继承并重写
 - exception 在处理中出现的异常
 - provider中的是基础方法，都将在`BackupManager.php`具体实现
-- Task 队列方式
+- task 队列方式
 - validate 参数验证
 - write 写入的方式，目前是sql文件，其他写入需求可以，比如数据库迁移
 - BackupManager.php 所有的相关操作都在这里
