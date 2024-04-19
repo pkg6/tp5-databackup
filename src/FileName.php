@@ -132,7 +132,7 @@ class FileName
     {
         $path_info = pathinfo($fileName);
         $ret = explode("-", $path_info["basename"]);
-        if (count($ret) >= 3) {
+        if (count($ret) > 3) {
             throw new FileNameExplodeException($fileName);
         }
 
