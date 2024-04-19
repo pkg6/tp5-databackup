@@ -8,7 +8,7 @@
  * This source file is subject to the MIT license that is bundled.
  */
 
-namespace tp5er\Backup\Task;
+namespace tp5er\Backup\task;
 
 use think\queue\Job as tpJob;
 
