@@ -12,6 +12,7 @@ namespace tp5er\Backup;
 
 use think\App;
 use think\helper\Arr;
+use tp5er\Backup\exception\FileNameExplodeException;
 use tp5er\Backup\write\WriteAbstract;
 
 class FileName
@@ -131,6 +132,9 @@ class FileName
     {
         $path_info = pathinfo($fileName);
         $ret = explode("-", $path_info["basename"]);
+        if (count($ret) >= 3) {
+            throw new FileNameExplodeException($fileName);
+        }
 
         return [$ret[0] ?? "", $ret[1] ?? "", $path_info["extension"] ?? "", $ret[2] ?? ""];
     }

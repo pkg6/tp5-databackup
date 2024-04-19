@@ -10,7 +10,7 @@
 
 namespace tp5er\Backup\write;
 
-use tp5er\Backup\exception\FileException;
+use tp5er\Backup\exception\FileNotException;
 
 class SQLFileWrite extends WriteAbstract
 {
@@ -56,7 +56,7 @@ class SQLFileWrite extends WriteAbstract
     public function readSQL($file)
     {
         if ( ! file_exists($file)) {
-            throw new FileException($file);
+            throw new FileNotException($file);
         }
         $sql = file_get_contents($file);
         $sqlArr = explode(PHP_EOL . PHP_EOL, $sql);
