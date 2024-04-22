@@ -70,7 +70,7 @@ class ApiController
      * 导出
      * 1. 提交备份任务：/index/export发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`
      * 2. 发送备份数据请求：/index/export发送get请求/index/export?index=0&page=0,直到page=0表示该数据备份完成
-     * 3. 备份完成：/index/cleanup 发送请求，全部备份已经完成.
+     * 3. 备份完成：/index/cleanup 发送请求，全部备份已经完成,主要作用还是清理在备份中生成的缓存，不清理可能会对下一次任务有影响
      *
      * @return \think\Response|void
      */

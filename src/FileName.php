@@ -17,7 +17,14 @@ use tp5er\Backup\write\WriteAbstract;
 
 class FileName
 {
-
+    /**
+     * @var App
+     */
+    protected $app;
+    /**
+     * @var string
+     */
+    protected $path;
     /**
      * @var BackupManager
      */
