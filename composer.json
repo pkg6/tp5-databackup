@@ -12,7 +12,7 @@
     "php": ">=7.2.5",
     "ext-json": "*",
     "ext-zlib": "*",
-    "topthink/framework": "v6.*"
+    "topthink/framework": "^6.0 || ^8.0"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.9",
