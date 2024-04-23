@@ -84,7 +84,7 @@ php think backup:cleanup
 2. 拉去一个分支 `develop` ，看个人习惯，无所谓
 3. 将develop提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 
 4. 等待作者合并
-5. 每周日会打tag，tag规范：2.1.x 作为新方法新类的出现，2.x.x作为对以往的方法和类进行变更甚至是破坏性的变更
+5. 定期（当接受到第一个合并请求开始计算一周之内）会打tag，tag规范：2.1.x 作为新方法新类的出现，2.x.x作为对以往的方法和类进行变更甚至是破坏性的变更
 
 ## 分支说明
 
