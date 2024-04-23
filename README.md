@@ -78,6 +78,14 @@ php think backup:cleanup
 - FileName.php 文件名由于是系统自动生成的所以需要一个类来进行维护并关联到FileInfo.php这个类的数据
 - OPT.php 定义操作常量
 
+## 提交代码规范
+
+1. fork一份代码到自己账号下,生成如 `test/tp5-databackup`
+2. 拉去一个分支 `develop` ，看个人习惯，无所谓
+3. 将develop提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 
+4. 等待作者合并
+5. 每周日会打tag，tag规范：2.1.x 作为新方法新类的出现，2.x.x作为对以往的方法和类进行变更甚至是破坏性的变更
+
 ## 其他手段进行数据备份还原
 
 ### mysql常见命令
