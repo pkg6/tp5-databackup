@@ -51,6 +51,7 @@ class ApiController
     /**
      * 导入
      * /index/import?file=fastadmin-mysql-20240416184903.sql.
+     * 文件过大会导致出现接口超时，读取失败等问题,推荐使用队列进行导入/命令行进行导入.
      *
      * @return \think\Response
      */
@@ -152,6 +153,23 @@ class ApiController
         } else {
             return $this->error("数据表优化出错请重试！");
         }
+    }
+
+    /**
+     * 备份文件下载.
+     *
+     * /index/download?file=fastadmin-mysql-20240416184903.sql.
+     *
+     * @return mixed
+     */
+    public function download()
+    {
+        $filename = request()->param('file');
+
+        return \think\Response::create($filename, 'file')
+            ->name(pathinfo($filename, PATHINFO_BASENAME))
+            ->isContent(false)
+            ->expire(180);
     }
 
 }
