@@ -10,26 +10,16 @@
 
 namespace tp5er\Backup;
 
-use tp5er\Backup\commands\BackupCommand;
-use tp5er\Backup\commands\BackupDatabaseCommand;
-use tp5er\Backup\commands\CleanupCommand;
-use tp5er\Backup\commands\ImportDatabaseCommand;
-use tp5er\Backup\commands\ListCommand;
+use tp5er\Backup\commands\Commands;
 
 class Service extends \think\Service
 {
 
     public function register()
     {
-        $this->commands([
-            BackupDatabaseCommand::class,
-            ImportDatabaseCommand::class,
-            ListCommand::class,
-            CleanupCommand::class,
-            BackupCommand::class,
-        ]);
+        $this->commands(Commands::commands());
 
-        $this->app->bind('tp5er.backup', function () {
+        $this->app->bind(BackupInterface::class, function () {
             return new BackupManager($this->app);
         });
     }

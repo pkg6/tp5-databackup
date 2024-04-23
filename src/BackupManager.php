@@ -26,7 +26,7 @@ use tp5er\Backup\provider\ProviderInterface;
 use tp5er\Backup\write\SQLFileWrite;
 use tp5er\Backup\write\WriteAbstract;
 
-class BackupManager
+class BackupManager implements BackupInterface
 {
 
     /**
@@ -145,16 +145,16 @@ class BackupManager
             $writeType = $this->app->config->get("backup.default", "sql");
         }
         $backups = $this->app->config->get("backup.backups");
-        if (!isset($backups[$writeType])) {
+        if ( ! isset($backups[$writeType])) {
             throw new InvalidArgumentException('Undefined backups config:' . $writeType);
         }
-        if (!isset($backups[$writeType]["type"])) {
+        if ( ! isset($backups[$writeType]["type"])) {
             throw new InvalidArgumentException('Undefined backups.type config:' . $writeType);
         }
         $backupclass = $backups[$writeType]["type"];
         if (class_exists($backupclass)) {
             $writeObject = new $backupclass;
-            if (!is_subclass_of($writeObject, WriteAbstract::class)) {
+            if ( ! is_subclass_of($writeObject, WriteAbstract::class)) {
                 throw new ClassDefineException($backupclass, WriteAbstract::class);
             }
         } elseif (isset($this->writes[$backupclass])) {
@@ -176,7 +176,7 @@ class BackupManager
      */
     protected function setVersion()
     {
-        $composer      = json_decode(file_get_contents($this->app->getRootPath() . "composer.json"), true);
+        $composer = json_decode(file_get_contents($this->app->getRootPath() . "composer.json"), true);
         $this->version = Arr::get($composer, "require.tp5er/tp5-databackup");
     }
 
@@ -203,11 +203,11 @@ class BackupManager
             $connectionName = $this->app->config->get("database.default");
         }
         $connections = $this->app->config->get("database.connections");
-        if (!isset($connections[$connectionName])) {
+        if ( ! isset($connections[$connectionName])) {
             throw new InvalidArgumentException('Undefined db config:' . $connectionName);
         }
         $this->databaseConfig = $connections[$connectionName];
-        $this->database       = Arr::get($this->databaseConfig, "database");
+        $this->database = Arr::get($this->databaseConfig, "database");
         $this->connectionName = $connectionName;
 
         return $this;
@@ -309,7 +309,6 @@ class BackupManager
         return $this->getProviderObject()->repair($tables);
     }
 
-
     /**
      * 备份第一步.
      *
@@ -322,8 +321,8 @@ class BackupManager
     public function backupStep1(array $tables)
     {
         $filenameObject = $this->getFileNameObject();
-        $filename       = $filenameObject->generateFileName($this->database, $this->connectionName);
-        $lockKey        = Cache::LockPrefix . crc32($filename . json_encode($tables));
+        $filename = $filenameObject->generateFileName($this->database, $this->connectionName);
+        $lockKey = Cache::LockPrefix . crc32($filename . json_encode($tables));
         if ($this->app->cache->has($lockKey)) {
             throw new LockException($lockKey);
         }
@@ -333,6 +332,7 @@ class BackupManager
         Cache::set($this->app, $lockKey, 1);
         Cache::set($this->app, Cache::File, $filename);
         Cache::set($this->app, Cache::Tables, $tables);
+
         return $filenameObject->copyright($write);
     }
 
@@ -351,20 +351,20 @@ class BackupManager
     public function backupStep2($index = 0, $page = 0)
     {
         $filename = $this->app->cache->get(Cache::File);
-        if (!$this->app->cache->has(Cache::File)) {
+        if ( ! $this->app->cache->has(Cache::File)) {
             throw new BackupStepException(2, "Unable to find file cache");
         }
 
         $write = $this->getWriteObject();
         $write->setFileName($filename);
 
-        $tables   = $this->app->cache->get(Cache::Tables);
-        $table    = $tables[$index];
+        $tables = $this->app->cache->get(Cache::Tables);
+        $table = $tables[$index];
         $cahceKey = Cache::Table . $filename . "-" . $table;
         if ($this->app->cache->has($cahceKey)) {
             // 有此缓存在标识我认为你已经备份完表结果以及部分数据
             $lastPage = $this->writeTableData($write, $table, $page, false);
-            if ((int)$lastPage === 0) {
+            if ((int) $lastPage === 0) {
                 $this->app->cache->delete($cahceKey);
             } else {
                 Cache::set($this->app, $cahceKey, $lastPage);
@@ -376,11 +376,12 @@ class BackupManager
             $isBackupdata = $this->writeTableStructure($write, $table);
             if ($isBackupdata) {
                 $lastPage = $this->writeTableData($write, $table, $page);
-                if ((int)$lastPage === 0) {
+                if ((int) $lastPage === 0) {
                     $this->app->cache->delete($cahceKey);
                 } else {
                     Cache::set($this->app, $cahceKey, $lastPage);
                 }
+
                 return $lastPage;
             }
         }
@@ -474,12 +475,12 @@ class BackupManager
     public function import($fileName)
     {
         $fileName = $this->getFileNameObject()->generateFullPathFile($fileName);
-        if (!file_exists($fileName)) {
+        if ( ! file_exists($fileName)) {
             throw new FileNotException($fileName);
         }
         list($_, $_, $ext, $_) = $this->getFileNameObject()->fileNameDatabaseConnectionNameExt($fileName);
-        $write    = $this->getWriteObject($ext);
-        $sqls     = $write->readSQL($fileName);
+        $write = $this->getWriteObject($ext);
+        $sqls = $write->readSQL($fileName);
         $provider = $this->getProviderObject(null, $write);
 
         return $provider->import($sqls);
