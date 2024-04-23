@@ -51,6 +51,7 @@ class ApiController
     /**
      * 导入
      * /index/import?file=fastadmin-mysql-20240416184903.sql.
+     * 文件过大会导致出现接口超时，读取失败等问题,推荐使用队列进行导入/命令行进行导入.
      *
      * @return \think\Response
      */
