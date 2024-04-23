@@ -1,16 +1,24 @@
 <?php
 
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 namespace tp5er\Backup;
 
 use think\App;
 
 final class Cache
 {
-    const Tag        = "tp5er.backup";
+    const Tag = "tp5er.backup";
     const LockPrefix = "tp5er.backup.lock.";
-    const File       = "tp5er.backup.file";
-    const Tables     = "tp5er.backup.tables";
-    const Table      = "tp5er.backup.table.";
+    const File = "tp5er.backup.file";
+    const Tables = "tp5er.backup.tables";
+    const Table = "tp5er.backup.table.";
 
     public static function set(App $app, $key, $value, $ttl = null)
     {
