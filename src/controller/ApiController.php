@@ -154,4 +154,21 @@ class ApiController
         }
     }
 
+    /**
+     * 备份文件下载.
+     *
+     * /index/download?file=fastadmin-mysql-20240416184903.sql.
+     *
+     * @return mixed
+     */
+    public function download()
+    {
+        $filename = request()->param('file');
+
+        return \think\Response::create($filename, 'file')
+            ->name(pathinfo($filename, PATHINFO_BASENAME))
+            ->isContent(false)
+            ->expire(180);
+    }
+
 }
