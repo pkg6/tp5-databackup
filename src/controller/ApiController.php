@@ -90,7 +90,11 @@ class ApiController
         $ret = [];
         foreach ($list as $k => $item) {
             foreach ($item as $field => $value) {
-                $ret[$k][Str::snake($field)] = $value;
+                $f = Str::snake($field);
+                if ($f=="data_length"){
+                    $value = format_bytes($value);
+                }
+                $ret[$k][$f] = $value;
             }
         }
 

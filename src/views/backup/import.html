@@ -7,9 +7,13 @@
 </head>
 <body>
 <!--表格呈现-->
-<table class="layui-hide" id="database-table"></table>
+<table class="layui-hide" id="elem-import-table"
+       table-url="{$routes.files}"
+       download-url="{$routes.download}"
+       import-url="{$routes.import}"
+></table>
 <!--单行操作-->
-<script type="text/html" id="table-bars">
+<script type="text/html" id="table-row-opt">
     <div class="layui-btn-container">
         <button class="layui-btn layui-btn-sm" lay-event="download">下载</button>
         <button class="layui-btn layui-btn-sm" lay-event="import">导入</button>
@@ -18,19 +22,24 @@
 
 <script src="//unpkg.com/layui@2.9.8/dist/layui.js"></script>
 <script>
-    layui.use('table', function () {
+    layui.define(['table', 'form', 'layer'], function (exports) {
+        var layer = layui.layer;
         var table = layui.table;
         var $ = layui.jquery;
+        var elem_import_table = "elem-import-table"
+        var import_table_url = document.getElementById(elem_import_table).getAttribute("table-url")
+        var download_url = document.getElementById(elem_import_table).getAttribute("download-url")
+        var import_url = document.getElementById(elem_import_table).getAttribute("import-url")
         // 渲染
         table.render({
-            elem: '#database-table',
-            url: "{$routes.files}", // 此处为静态模拟数据，实际使用时需换成真实接口
+            elem: '#' + elem_import_table,
+            url: import_table_url, // 此处为静态模拟数据，实际使用时需换成真实接口
             cols: [[
                 {field: 'name', title: '文件名', width: 120},
                 {field: 'database', title: '数据库', width: 120},
                 {field: 'connection', title: '数据库链接', width: 120},
                 {field: 'size', title: '大小', width: 120},
-                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-bars'}
+                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
             ]],
             initSort: { // 设置初始排序
                 field: 'experience', // 字段名
@@ -38,7 +47,7 @@
             },
         });
         //行级事件
-        table.on("tool(database-table)", function (obj) {
+        table.on("tool(" + elem_import_table + ")", function (obj) {
             var data = obj.data;
             console.log(data)
             switch (obj.event) {
@@ -47,7 +56,7 @@
                         time: 0 // 永不关闭
                         , btn: ['确定', '取消']
                         , yes: function (index) {
-                            window.open("{$routes.download}?filename=" + data.filename, '_blank');
+                            window.open(download_url + "?filename=" + data.filename, '_blank');
                             layer.close(index);
                         }
                     });
@@ -59,7 +68,7 @@
                         , yes: function (index) {
                             $.ajax({
                                 type: "GET",
-                                url: "{$routes.import}",
+                                url: import_url,
                                 data: {"name": data.name},
                                 success: function (ret) {
                                     layer.msg(ret.msg)
@@ -74,6 +83,8 @@
             }
         })
 
+
+        exports('import', {});
     });
 </script>
 </body>

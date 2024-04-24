@@ -6,61 +6,85 @@
     <link href="//cdn.staticfile.org/layui/2.9.7/css/layui.css" rel="stylesheet">
 </head>
 <body>
+
 <!--表格呈现-->
-<table class="layui-hide" id="database-table"></table>
+<table class="layui-hide" id="elem-backup-tables"
+       table-url="{$routes.tables}"
+       table-url="{$routes.tables}"
+       step1-url="{$routes.backupStep1}"
+       step2-url="{$routes.backupStep2}"
+       step3-url="{$routes.cleanup}"
+       repair-url="{$routes.repair}"
+       optimize-url="{$routes.optimize}"
+></table>
 <!--批量操作-->
-<script type="text/html" id="table-toolbars">
+<script type="text/html" id="table-opt">
     <div class="layui-btn-container">
-        <button class="layui-btn layui-btn-sm" lay-event="backups">备份表</button>
+        <button class="layui-btn layui-btn-sm" id="backups-status" lay-event="backups">备份表</button>
         <button class="layui-btn layui-btn-disabled" id="backup-process">备份状态变化</button>
         <button class="layui-btn layui-btn-sm" lay-event="optimizes">优化表</button>
         <button class="layui-btn layui-btn-sm" lay-event="repairs">修复表</button>
     </div>
 </script>
 <!--单行操作-->
-<script type="text/html" id="table-bars">
+<script type="text/html" id="table-row-opt">
     <div class="layui-btn-container">
-        <button class="layui-btn layui-btn-sm" lay-event="optimize">优化表</button>
-        <button class="layui-btn layui-btn-sm" lay-event="repair">修复表</button>
+        <button class="layui-btn layui-btn-sm" lay-event="optimize" url="{$routes.optimize}">优化表</button>
+        <button class="layui-btn layui-btn-sm" lay-event="repair" url="{$routes.repair}">修复表</button>
     </div>
 </script>
 
 <script src="//unpkg.com/layui@2.9.8/dist/layui.js"></script>
 <script>
-    layui.use('table', function () {
+    layui.define(['table', 'form', 'layer'], function (exports) {
+        var layer = layui.layer;
         var table = layui.table;
         var $ = layui.jquery;
+
+
+        //表格渲染节点
+        var elem_backup_table = "elem-backup-tables";
+        //访问列表的接口
+        var backup_table_url = document.getElementById(elem_backup_table).getAttribute("table-url")
+        var backup_step1_url = document.getElementById(elem_backup_table).getAttribute("step1-url")
+        var backup_step2_url = document.getElementById(elem_backup_table).getAttribute("step2-url")
+        var backup_step3_url = document.getElementById(elem_backup_table).getAttribute("step3-url")
+        var repair_url = document.getElementById(elem_backup_table).getAttribute("repair-url")
+        var optimize_url = document.getElementById(elem_backup_table).getAttribute("optimize-url")
+
+        console.log(backup_table_url, backup_step1_url, backup_step2_url, backup_step3_url, repair_url, optimize_url)
         // 渲染
         table.render({
-            elem: '#database-table',
-            url: "{$routes.tables}", // 此处为静态模拟数据，实际使用时需换成真实接口
+            elem: '#' + elem_backup_table,
+            url: backup_table_url, // 此处为静态模拟数据，实际使用时需换成真实接口
             cols: [[
                 {type: 'checkbox', fixed: 'left'},
-                {field: 'name', title: '表名', width: 120},
+                {field: 'name', title: '表名', width: 200},
                 {field: 'engine', title: '引擎', width: 120},
                 {field: 'rows', title: '数据量', width: 120},
                 {field: 'data_length', title: '数据大小', width: 120},
+                {field: 'collation', title: '排序规则', width: 180},
                 {field: 'comment', title: '表注释', width: 120},
                 {field: 'create_time', title: '创建时间', width: 180},
-                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-bars'}
+                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
             ]],
-            toolbar: '#table-toolbars',
-            initSort: { // 设置初始排序
-                field: 'experience', // 字段名
-                type: 'desc' // 倒序
+            toolbar: '#table-opt',
+            initSort: {
+                field: 'experience',
+                type: 'desc'
             },
         });
         // 头工具栏事件
-        table.on('toolbar(database-table)', function (obj) {
+        table.on("toolbar(" + elem_backup_table + ")", function (obj) {
             //获取选中状态的表
             var checked_data = table.checkStatus(obj.config.id).data;
             var tables = data2tables(checked_data);
             switch (obj.event) {
                 case "optimizes":
-                    ajaxTable("POST", "{$routes.optimize}", tables)
+                    ajaxTable("POST", optimize_url, tables)
                     break;
                 case "repairs":
-                    ajaxTable("POST", "{$routes.repair}", tables)
+                    ajaxTable("POST", repair_url, tables)
                     break;
                 case "backups":
                     backupAjax(tables);
@@ -71,15 +95,15 @@
             }
         });
         //行级事件
-        table.on("tool(database-table)", function (obj) {
+        table.on("tool(" + elem_backup_table + ")", function (obj) {
             var data = obj.data;
             var tables = data2table(data);
             switch (obj.event) {
                 case "optimize":
-                    ajaxTable("POST", "{$routes.optimize}", tables)
+                    ajaxTable("POST", optimize_url, tables)
                     break;
                 case "repair":
-                    ajaxTable("POST", "{$routes.repair}", tables)
+                    ajaxTable("POST", repair_url, tables)
                     break;
                 default:
                     layer.alert("无法处理此刻操作")
@@ -90,11 +114,13 @@
         function backupAjax(table) {
             $.ajax({
                 type: "POST",
-                url: "{$routes.backupStep1}",
+                url: backup_step1_url,
                 data: {"tables": table},
                 success: function (ret) {
                     if (ret.code === 0) {
+                        $("#backups-status").addClass("layui-btn-disabled")
                         showmsg(ret.msg)
+
                         backupAjax2(ret.data.index, ret.data.page)
                     } else {
                         layer.msg(ret.msg)
@@ -107,7 +133,8 @@
         function backupAjax2(index, page) {
             $.ajax({
                 type: "GET",
-                url: "{$routes.backupStep2}",
+                async: true,
+                url: backup_step2_url,
                 data: {"index": index, "page": page},
                 success: function (ret) {
                     if (ret.code === 0) {
@@ -129,14 +156,15 @@
         function backupAjax3() {
             $.ajax({
                 type: "GET",
-                url: "{$routes.cleanup}",
+                url: backup_step3_url,
                 success: function (ret) {
                     showmsg("备份完毕")
+                    $("#backups-status").removeClass("layui-btn-disabled")
                     layer.msg("备份完毕")
                 }
             })
         }
-        
+
         function showmsg(msg) {
             $("#backup-process").html(msg)
         }
@@ -165,6 +193,8 @@
         function data2table(data) {
             return data.name
         }
+
+        exports('backup', {});
     });
 </script>
 </body>
