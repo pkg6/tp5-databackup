@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>数据库备份案例</title>
+    <link href="//cdn.staticfile.org/layui/2.9.7/css/layui.css" rel="stylesheet">
+</head>
+<body>
+<!--表格呈现-->
+<table class="layui-hide" id="database-table"></table>
+<!--批量操作-->
+<script type="text/html" id="table-toolbars">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="backups">备份表</button>
+        <button class="layui-btn layui-btn-disabled" id="backup-process">备份状态变化</button>
+        <button class="layui-btn layui-btn-sm" lay-event="optimizes">优化表</button>
+        <button class="layui-btn layui-btn-sm" lay-event="repairs">修复表</button>
+    </div>
+</script>
+<!--单行操作-->
+<script type="text/html" id="table-bars">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="optimize">优化表</button>
+        <button class="layui-btn layui-btn-sm" lay-event="repair">修复表</button>
+    </div>
+</script>
+
+<script src="//unpkg.com/layui@2.9.8/dist/layui.js"></script>
+<script>
+    layui.use('table', function () {
+        var table = layui.table;
+        var $ = layui.jquery;
+        // 渲染
+        table.render({
+            elem: '#database-table',
+            url: "{$config.controller}/tables", // 此处为静态模拟数据，实际使用时需换成真实接口
+            cols: [[
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'name', title: '表名', width: 120},
+                {field: 'engine', title: '引擎', width: 120},
+                {field: 'rows', title: '数据量', width: 120},
+                {field: 'data_length', title: '数据大小', width: 120},
+                {field: 'comment', title: '表注释', width: 120},
+                {field: 'create_time', title: '创建时间', width: 180},
+                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-bars'}
+            ]],
+            toolbar: '#table-toolbars',
+            initSort: { // 设置初始排序
+                field: 'experience', // 字段名
+                type: 'desc' // 倒序
+            },
+        });
+        // 头工具栏事件
+        table.on('toolbar(database-table)', function (obj) {
+            //获取选中状态的表
+            var checked_data = table.checkStatus(obj.config.id).data;
+            var tables = data2tables(checked_data);
+            switch (obj.event) {
+                case "optimizes":
+                    ajaxTable("POST", "{$config.controller}/optimize", tables)
+                    break;
+                case "repairs":
+                    ajaxTable("POST", "{$config.controller}/repair", tables)
+                    break;
+                case "backups":
+                    backupAjax(tables);
+                    break;
+
+                default:
+                    layer.alert("无法处理此刻操作")
+            }
+        });
+        //行级事件
+        table.on("tool(database-table)", function (obj) {
+            var data = obj.data;
+            var tables = data2table(data);
+            switch (obj.event) {
+                case "optimize":
+                    ajaxTable("POST", "{$config.controller}/optimize", tables)
+                    break;
+                case "repair":
+                    ajaxTable("POST", "{$config.controller}/repair", tables)
+                    break;
+                default:
+                    layer.alert("无法处理此刻操作")
+            }
+        })
+
+        //备份
+        function backupAjax(table) {
+            $.ajax({
+                type: "POST",
+                url: "{$config.controller}/backupStep1",
+                data: {"tables": table},
+                success: function (ret) {
+                    if (ret.code === 0) {
+                        showmsg(ret.msg)
+                        backupAjax2(ret.data.index, ret.data.page)
+                    } else {
+                        layer.msg(ret.msg)
+                    }
+                }
+            })
+        }
+
+        //递归备份数据
+        function backupAjax2(index, page) {
+            $.ajax({
+                type: "GET",
+                url: "{$config.controller}/backupStep2",
+                data: {"index": index, "page": page},
+                success: function (ret) {
+                    if (ret.code === 0) {
+                        showmsg("当前正在备份的表:" + ret.data.table)
+                        if (ret.data.page >= 0) {
+                            //TODO 备份表按钮是不可点击
+                            backupAjax2(ret.data.index, ret.data.page)
+                        } else {
+                            backupAjax3()
+                        }
+                    } else {
+                        layer.msg(ret.msg)
+                    }
+                }
+            })
+        }
+
+        //清理缓存
+        function backupAjax3() {
+            $.ajax({
+                type: "GET",
+                url: "{$config.controller}/cleanup",
+                success: function (ret) {
+                    showmsg("备份完毕")
+                    layer.msg("备份完毕")
+                }
+            })
+        }
+        
+        function showmsg(msg) {
+            $("#backup-process").html(msg)
+        }
+
+        function ajaxTable(method, path, table) {
+            $.ajax({
+                type: method,
+                url: path,
+                data: {"tables": table},
+                success: function (ret) {
+                    layer.msg(ret.msg)
+                }
+            })
+        }
+
+        //(批量操作)将layui选中节点对象提取table
+        function data2tables(data) {
+            let tables = [];
+            for (let i = 0; i < data.length; i++) {
+                tables[i] = data2table(data[i]);
+            }
+            return tables;
+        }
+
+        //（单行操作）将layui节点对象提取table
+        function data2table(data) {
+            return data.name
+        }
+    });
+</script>
+</body>
+</html>
