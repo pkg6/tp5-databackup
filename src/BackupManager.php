@@ -344,6 +344,16 @@ class BackupManager implements BackupInterface
     }
 
     /**
+     * 当前备份的文件名称.
+     *
+     * @return string
+     */
+    public function getCurrentBackupFile()
+    {
+        return $this->app->cache->get(Cache::File);
+    }
+
+    /**
      * 备份数据第二步.
      *
      * @param int $index
@@ -404,6 +414,8 @@ class BackupManager implements BackupInterface
     }
 
     /**
+     * 当前备份正在执行的表.
+     *
      * @return string
      */
     public function getCurrentBackupTable()

@@ -112,6 +112,19 @@ interface BackupInterface
     public function backupStep2($index = 0, $page = 0);
 
     /**
+     * 当前备份的文件名.
+     *
+     * @return string
+     */
+    public function getCurrentBackupFile();
+
+    /**
+     * 当前备份正在备份的表.
+     *
+     * @return string
+     */
+    public function getCurrentBackupTable();
+    /**
      * 备份所有表中结构和数据.
      *
      * @param array $tables
