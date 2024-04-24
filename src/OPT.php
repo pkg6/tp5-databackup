@@ -21,9 +21,24 @@ final class OPT
     //优化表
     const optimize = "optimize";
 
+    const backupPageTableDoesNotExist = -1;
+    const backupPageTableOver = 0;
+
     public static function opts()
     {
-        return [OPT::import, OPT::backup,OPT::repair,OPT::optimize];
+        return [OPT::import, OPT::backup, OPT::repair, OPT::optimize];
+    }
+
+    public static function backupPage($page)
+    {
+        switch ($page) {
+            case OPT::backupPageTableDoesNotExist:
+                return "表不存在";
+            case OPT::backupPageTableOver:
+                return "表数据已备份完毕";
+            default:
+                return "继续备份表数据";
+        }
     }
 
 }

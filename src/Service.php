@@ -17,6 +17,9 @@ class Service extends \think\Service
 
     public function register()
     {
+
+        define("backup_src_path", __DIR__ . DIRECTORY_SEPARATOR);
+
         $this->commands(Commands::commands());
 
         $this->app->bind(BackupInterface::class, function () {

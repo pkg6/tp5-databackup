@@ -10,17 +10,35 @@
 
 namespace tp5er\Backup\controller;
 
+use think\facade\View;
+use think\helper\Str;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\facade\Backup;
+use tp5er\Backup\OPT;
 use tp5er\Backup\validate\ExportValidate;
 
 /**
  * 作者是将此控制器继承在Index.php中,所以路由/index/*
  * Class ApiController.
  */
-class ApiController
+class ApiController implements ControllerInterface
 {
     use Response;
+
+    public function index()
+    {
+        $controller = Str::snake(request()->controller());
+        $action = Str::snake(request()->action());
+        View::config([
+            'view_path' => backup_src_path . 'views' . DIRECTORY_SEPARATOR,
+        ]);
+        View::assign("config", [
+            "controller" => $controller,
+            "method" => $action,
+        ]);
+
+        return View::fetch("backup/list");
+    }
 
     /**
      * 获取所有的数据表
@@ -31,8 +49,14 @@ class ApiController
     public function tables()
     {
         $list = Backup::tables();
+        $ret = [];
+        foreach ($list as $k => $item) {
+            foreach ($item as $field => $value) {
+                $ret[$k][Str::snake($field)] = $value;
+            }
+        }
 
-        return $this->success($list);
+        return $this->success($ret);
     }
 
     /**
@@ -68,43 +92,68 @@ class ApiController
     }
 
     /**
-     * 导出
-     * 1. 提交备份任务：/index/export发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`
-     * 2. 发送备份数据请求：/index/export发送get请求/index/export?index=0&page=0,直到page=0表示该数据备份完成
-     * 3. 备份完成：/index/cleanup 发送请求，全部备份已经完成,主要作用还是清理在备份中生成的缓存，不清理可能会对下一次任务有影响.
+     * 备份第一步
+     * 提交备份任务：/index/backupStep1发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`.
      *
-     * @return \think\Response|void
+     * @return \think\Response
      */
-    public function export()
+    public function backupStep1()
     {
         $validate = new ExportValidate();
-        if (request()->isPost()) {
-            $data = request()->post();
-
-            if ( ! $validate->scene("step1")->check($data)) {
-                return $this->error($validate->getError());
-            }
-            try {
-                if (Backup::backupStep1($data["tables"])) {
-                    return $this->success(['index' => 0, 'page' => 1], '初始化成功！');
-                }
-            } catch (LockException $exception) {
-                return $this->error('检测到有一个备份任务正在执行，请稍后再试！');
-            } catch (\Exception $exception) {
-                return $this->error($exception->getMessage());
-            }
-        } elseif (request()->isGet()) {
-            $data = request()->get();
-            if ( ! $validate->scene("step2")->check($data)) {
-                return $this->error($validate->getError());
-            }
-            $index = (int) $data["index"];
-            $lastPage = Backup::backupStep2($index, $data["page"]);
-            if ($lastPage == 0) {
-                return $this->success(['index' => $index + 1, 'page' => $lastPage], '备份完毕！');
+        $data = request()->post();
+        if ( ! $validate->scene("step1")->check($data)) {
+            return $this->error($validate->getError());
+        }
+        try {
+            if (Backup::backupStep1($data["tables"])) {
+                return $this->success([
+                    'index' => 0,
+                    'page' => 1,
+                    "tables" => $data["tables"],
+                ], '初始化成功！');
             } else {
-                return $this->success(['index' => $index, 'page' => $lastPage], '需要继续进行备份数据！');
+                return $this->error('初始化失败！');
             }
+        } catch (LockException $exception) {
+            return $this->error('检测到有一个备份任务正在执行，请稍后再试！');
+        } catch (\Exception $exception) {
+            return $this->error($exception->getMessage());
+        }
+    }
+
+    /**
+     * 备份第二步
+     * 发送备份数据请求：/index/export发送get请求/index/backupStep2?index=0&page=0,直到page=0表示该数据备份完成.
+     *
+     * @return \think\Response
+     */
+    public function backupStep2()
+    {
+        $validate = new ExportValidate();
+        $data = request()->get();
+        if ( ! $validate->scene("step2")->check($data)) {
+            return $this->error($validate->getError());
+        }
+        $index = (int) $data["index"];
+        $lastPage = Backup::backupStep2($index, $data["page"]);
+
+        if ($lastPage == 0) {
+            return $this->success([
+                'index' => $index + 1,
+                'page' => 0,
+                "table" => Backup::getCurrentBackupTable(),
+            ], '单表备份完毕！');
+        } else {
+            $msg = "需要继续进行备份数据！'";
+            if ($lastPage < 0) {
+                $msg = OPT::backupPage($lastPage);
+            }
+
+            return $this->success([
+                'index' => $index,
+                'page' => $lastPage,
+                "table" => Backup::getCurrentBackupTable()
+            ], $msg);
         }
     }
 
@@ -132,8 +181,11 @@ class ApiController
     public function repair()
     {
         $tables = request()->post("tables");
+        if (is_null($tables)) {
+            return $this->error("没有获取到表");
+        }
         if (Backup::repair($tables)) {
-            return $this->success("数据表修复完成！");
+            return $this->success($tables, "数据表修复完成！");
         } else {
             return $this->error("数据表修复出错请重试");
         }
@@ -148,8 +200,11 @@ class ApiController
     public function optimize()
     {
         $tables = request()->post("tables");
+        if (is_null($tables)) {
+            return $this->error("没有获取到表");
+        }
         if (Backup::optimize($tables)) {
-            return $this->success("数据表优化完成！");
+            return $this->success($tables, "数据表优化完成！");
         } else {
             return $this->error("数据表优化出错请重试！");
         }

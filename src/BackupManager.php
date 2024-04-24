@@ -73,6 +73,13 @@ class BackupManager implements BackupInterface
     protected $provider;
 
     /**
+     * 当前备份哪一个表.
+     *
+     * @var string
+     */
+    protected $currentBackupTable = "";
+
+    /**
      * @param App $app
      *
      * @throws ClassDefineException
@@ -343,6 +350,8 @@ class BackupManager implements BackupInterface
      * @param int $page
      *
      * @return int
+     *  当page <=0 表示该表已备份完毕
+     *  当page > 0 表示该表需要继续进行备份
      *
      * @throws BackupStepException
      * @throws ClassDefineException
@@ -359,11 +368,16 @@ class BackupManager implements BackupInterface
         $write->setFileName($filename);
 
         $tables = $this->app->cache->get(Cache::Tables);
-        $table = $tables[$index];
-        $cahceKey = Cache::Table . $filename . "-" . $table;
+        // 没有表可以进行备份
+        if ( ! isset($tables[$index])) {
+            return OPT::backupPageTableDoesNotExist;
+        }
+        $this->currentBackupTable = $tables[$index];
+
+        $cahceKey = Cache::Table . $filename . "-" . $this->getCurrentBackupTable();
         if ($this->app->cache->has($cahceKey)) {
             // 有此缓存在标识我认为你已经备份完表结果以及部分数据
-            $lastPage = $this->writeTableData($write, $table, $page, false);
+            $lastPage = $this->writeTableData($write, $this->getCurrentBackupTable(), $page, false);
             if ((int) $lastPage === 0) {
                 $this->app->cache->delete($cahceKey);
             } else {
@@ -373,9 +387,9 @@ class BackupManager implements BackupInterface
             return $lastPage;
         } else {
             // 首先进行备份表结果，然后判断是否进行备份表数据
-            $isBackupdata = $this->writeTableStructure($write, $table);
+            $isBackupdata = $this->writeTableStructure($write, $this->getCurrentBackupTable());
             if ($isBackupdata) {
-                $lastPage = $this->writeTableData($write, $table, $page);
+                $lastPage = $this->writeTableData($write, $this->getCurrentBackupTable(), $page);
                 if ((int) $lastPage === 0) {
                     $this->app->cache->delete($cahceKey);
                 } else {
@@ -386,7 +400,15 @@ class BackupManager implements BackupInterface
             }
         }
 
-        return 0;
+        return OPT::backupPageTableOver;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrentBackupTable()
+    {
+        return $this->currentBackupTable;
     }
 
     /**

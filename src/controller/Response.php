@@ -60,9 +60,8 @@ trait Response
         } elseif ($url) {
             $url = (strpos($url, '://') || 0 === strpos($url, '/')) ? $url : (string) $this->app->route->buildUrl($url);
         }
-
         $result = [
-            'code' => 1,
+            'code' => 0,
             'msg' => $msg,
             'data' => $data,
             'url' => $url,
@@ -91,7 +90,7 @@ trait Response
             $url = (strpos($url, '://') || 0 === strpos($url, '/')) ? $url : (string) $this->app->route->buildUrl($url);
         }
         $result = [
-            'code' => 0,
+            'code' => 1,
             'msg' => $msg,
             'data' => $data,
             'url' => $url,
