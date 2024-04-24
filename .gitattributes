@@ -1,6 +1,7 @@
 * text=auto
 
 /http export-ignore
+/js export-ignore
 /tests export-ignore
 /tp5-demo export-ignore
 /tp6-controller export-ignore
