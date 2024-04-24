@@ -33,7 +33,7 @@
         // 渲染
         table.render({
             elem: '#database-table',
-            url: "{$config.controller}/tables", // 此处为静态模拟数据，实际使用时需换成真实接口
+            url: "{$routes.tables}", // 此处为静态模拟数据，实际使用时需换成真实接口
             cols: [[
                 {type: 'checkbox', fixed: 'left'},
                 {field: 'name', title: '表名', width: 120},
@@ -57,10 +57,10 @@
             var tables = data2tables(checked_data);
             switch (obj.event) {
                 case "optimizes":
-                    ajaxTable("POST", "{$config.controller}/optimize", tables)
+                    ajaxTable("POST", "{$routes.optimize}", tables)
                     break;
                 case "repairs":
-                    ajaxTable("POST", "{$config.controller}/repair", tables)
+                    ajaxTable("POST", "{$routes.repair}", tables)
                     break;
                 case "backups":
                     backupAjax(tables);
@@ -76,10 +76,10 @@
             var tables = data2table(data);
             switch (obj.event) {
                 case "optimize":
-                    ajaxTable("POST", "{$config.controller}/optimize", tables)
+                    ajaxTable("POST", "{$routes.optimize}", tables)
                     break;
                 case "repair":
-                    ajaxTable("POST", "{$config.controller}/repair", tables)
+                    ajaxTable("POST", "{$routes.repair}", tables)
                     break;
                 default:
                     layer.alert("无法处理此刻操作")
@@ -90,7 +90,7 @@
         function backupAjax(table) {
             $.ajax({
                 type: "POST",
-                url: "{$config.controller}/backupStep1",
+                url: "{$routes.backupStep1}",
                 data: {"tables": table},
                 success: function (ret) {
                     if (ret.code === 0) {
@@ -107,7 +107,7 @@
         function backupAjax2(index, page) {
             $.ajax({
                 type: "GET",
-                url: "{$config.controller}/backupStep2",
+                url: "{$routes.backupStep2}",
                 data: {"index": index, "page": page},
                 success: function (ret) {
                     if (ret.code === 0) {
@@ -129,7 +129,7 @@
         function backupAjax3() {
             $.ajax({
                 type: "GET",
-                url: "{$config.controller}/cleanup",
+                url: "{$routes.cleanup}",
                 success: function (ret) {
                     showmsg("备份完毕")
                     layer.msg("备份完毕")
