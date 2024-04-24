@@ -31,6 +31,7 @@ use tp5er\Backup\write\WriteAbstract;
  * @method static bool backupStep1(array $tables)
  * @method static bool backupStep2($index = 0, $page = 0)
  * @method static string getCurrentBackupTable()
+ * @method static string getCurrentBackupFile();
  * @method static void cleanup()
  * @method static FileInfo[] files()
  * @method static bool import($fileName)

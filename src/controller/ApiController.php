@@ -19,25 +19,63 @@ use tp5er\Backup\validate\ExportValidate;
 
 /**
  * 作者是将此控制器继承在Index.php中,所以路由/index/*
+ *  composer require topthink/think-view
+ * /index/backup 使用layui 实现备份的流程
+ * /index/import 使用layui 实现还原的流程
  * Class ApiController.
  */
-class ApiController implements ControllerInterface
+class ApiController
 {
     use Response;
 
-    public function index()
+    /**
+     * 路由.
+     *
+     * @return string[]
+     */
+    protected function apiRoute()
     {
-        $controller = Str::snake(request()->controller());
-        $action = Str::snake(request()->action());
+        return [
+            "tables" => "/index/tables",
+            "optimize" => "/index/optimize",
+            "repair" => "/index/repair",
+            "backupStep1" => "/index/backupStep1",
+            "backupStep2" => "/index/backupStep2",
+            "cleanup" => "/index/cleanup",
+            "files" => "/index/files",
+            "import" => "/index/doImport",
+            "download" => "/index/download",
+        ];
+    }
+
+    /**
+     * 备份视图渲染.
+     *
+     * @return string
+     */
+    public function backup()
+    {
         View::config([
             'view_path' => backup_src_path . 'views' . DIRECTORY_SEPARATOR,
         ]);
-        View::assign("config", [
-            "controller" => $controller,
-            "method" => $action,
-        ]);
+        View::assign("routes", $this->apiRoute());
 
-        return View::fetch("backup/list");
+        return View::fetch("backup/backup");
+    }
+
+    /**
+     * 还原视图渲染.
+     *
+     * @return string
+     */
+    public function import()
+    {
+        View::config([
+            'view_path' => backup_src_path . 'views' . DIRECTORY_SEPARATOR,
+        ]);
+        View::assign("routes", $this->apiRoute());
+
+        return View::fetch("backup/import");
     }
 
     /**
@@ -65,7 +103,7 @@ class ApiController implements ControllerInterface
      *
      * @return \think\Response
      */
-    public function filelist()
+    public function files()
     {
         $list = Backup::files();
 
@@ -74,14 +112,14 @@ class ApiController implements ControllerInterface
 
     /**
      * 导入
-     * /index/import?file=fastadmin-mysql-20240416184903.sql.
+     * /index/import?name=fastadmin-mysql-20240416184903.sql.
      * 文件过大会导致出现接口超时，读取失败等问题,推荐使用队列进行导入/命令行进行导入.
      *
      * @return \think\Response
      */
-    public function import()
+    public function doImport()
     {
-        $file = request()->param('file');
+        $file = request()->param('name');
         try {
             $ret = Backup::import($file);
 
@@ -219,7 +257,7 @@ class ApiController implements ControllerInterface
      */
     public function download()
     {
-        $filename = request()->param('file');
+        $filename = request()->param('filename');
 
         return \think\Response::create($filename, 'file')
             ->name(pathinfo($filename, PATHINFO_BASENAME))

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>数据库备份案例</title>
+    <link href="//cdn.staticfile.org/layui/2.9.7/css/layui.css" rel="stylesheet">
+</head>
+<body>
+<!--表格呈现-->
+<table class="layui-hide" id="database-table"></table>
+<!--单行操作-->
+<script type="text/html" id="table-bars">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="download">下载</button>
+        <button class="layui-btn layui-btn-sm" lay-event="import">导入</button>
+    </div>
+</script>
+
+<script src="//unpkg.com/layui@2.9.8/dist/layui.js"></script>
+<script>
+    layui.use('table', function () {
+        var table = layui.table;
+        var $ = layui.jquery;
+        // 渲染
+        table.render({
+            elem: '#database-table',
+            url: "{$routes.files}", // 此处为静态模拟数据，实际使用时需换成真实接口
+            cols: [[
+                {field: 'name', title: '文件名', width: 120},
+                {field: 'database', title: '数据库', width: 120},
+                {field: 'connection', title: '数据库链接', width: 120},
+                {field: 'size', title: '大小', width: 120},
+                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-bars'}
+            ]],
+            initSort: { // 设置初始排序
+                field: 'experience', // 字段名
+                type: 'desc' // 倒序
+            },
+        });
+        //行级事件
+        table.on("tool(database-table)", function (obj) {
+            var data = obj.data;
+            console.log(data)
+            switch (obj.event) {
+                case "download":
+                    layer.msg('确定要下载吗？', {
+                        time: 0 // 永不关闭
+                        , btn: ['确定', '取消']
+                        , yes: function (index) {
+                            window.open("{$routes.download}?filename=" + data.filename, '_blank');
+                            layer.close(index);
+                        }
+                    });
+                    break;
+                case "import":
+                    layer.msg('确定要导入吗？', {
+                        time: 0 // 永不关闭
+                        , btn: ['确定', '取消']
+                        , yes: function (index) {
+                            $.ajax({
+                                type: "GET",
+                                url: "{$routes.import}",
+                                data: {"name": data.name},
+                                success: function (ret) {
+                                    layer.msg(ret.msg)
+                                }
+                            })
+                            layer.close(index);
+                        }
+                    });
+                    break;
+                default:
+                    layer.alert("无法处理此刻操作")
+            }
+        })
+
+    });
+</script>
+</body>
+</html>
