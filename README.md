@@ -94,6 +94,20 @@ master分支 ：1.x版本的最新代码，tag1.x标签是在该分支进行上
 
 develop分支：作者的开发分支，主要开发2.x版本的bug
 
+## 作者案例开发流程
+
+~~~
+composer create-project topthink/think tp
+cd tp
+composer require tp5er/tp5-databackup dev-develop
+rm -rf vendor/tp5er/tp5-databackup
+git clone -b develop git@github.com:pkg6/tp5-databackup.git vendor/tp5er/tp5-databackup
+~~~
+
+> 进入vendor/tp5er/tp5-databackup进行修改代码，然后进行提交代码，提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 进行合并到main分支
+
+
+
 ## 其他手段进行数据备份还原
 
 ### mysql常见命令
