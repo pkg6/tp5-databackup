@@ -5,6 +5,10 @@
  *
  * (c) pkg6 <https://github.com/pkg6>
  *
+ * (L) Licensed <https://opensource.org/license/MIT>
+ *
+ * (A) zhiqiang <https://www.zhiqiang.wang>
+ *
  * This source file is subject to the MIT license that is bundled.
  */
 
@@ -91,7 +95,7 @@ class ApiController
         foreach ($list as $k => $item) {
             foreach ($item as $field => $value) {
                 $f = Str::snake($field);
-                if ($f=="data_length"){
+                if ($f == "data_length") {
                     $value = format_bytes($value);
                 }
                 $ret[$k][$f] = $value;

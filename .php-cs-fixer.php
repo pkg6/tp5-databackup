@@ -1,20 +1,36 @@
 <?php
 
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * (L) Licensed <https://opensource.org/license/MIT>
+ *
+ * (A) zhiqiang <https://www.zhiqiang.wang>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 $header = <<<EOF
 This file is part of the tp5er/tp5-databackup.
 
 (c) pkg6 <https://github.com/pkg6>
 
+(L) Licensed <https://opensource.org/license/MIT>
+
+(A) zhiqiang <https://www.zhiqiang.wang>
+
 This source file is subject to the MIT license that is bundled.
 EOF;
 
 $finder = PhpCsFixer\Finder::create()
-    ->in([__DIR__ . '/src']);
+    ->in([__DIR__ . '/src',__DIR__ . '/config']);
 
 return (new PhpCsFixer\Config())
     ->setRules([
         '@PSR2' => true,
-        'header_comment' => array('header' => $header),
+        'header_comment' => ['header' => $header],
         'array_syntax' => ['syntax' => 'short'],
         'binary_operator_spaces' => true,
         'single_line_after_imports' => true,
