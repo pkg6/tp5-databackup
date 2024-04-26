@@ -22,6 +22,7 @@ final class Cache
     const LockPrefix = "tp5er.backup.lock.";
     const File = "tp5er.backup.file";
     const Tables = "tp5er.backup.tables";
+    const TableCounts = "tp5er.backup.tables.counts";
     const Table = "tp5er.backup.table.";
 
     public static function set(App $app, $key, $value, $ttl = null)

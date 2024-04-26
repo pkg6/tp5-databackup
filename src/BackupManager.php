@@ -358,6 +358,62 @@ class BackupManager implements BackupInterface
     }
 
     /**
+     * 可作为备份第一步，用于前端进度条
+     *
+     * @param array $tables
+     * @return array
+     *
+     * @throws BackupStepException
+     * @throws ClassDefineException
+     * @throws LockException
+     */
+    public function tableCounts($tables)
+    {
+        $limit = $this->getLimit();
+        $filenameObject = $this->getFileNameObject();
+        $filename = $filenameObject->generateFileName($this->database, $this->connectionName);
+        $lockKey = Cache::LockPrefix . crc32($filename . json_encode($tables));
+        if ($this->app->cache->has($lockKey)) {
+            throw new LockException($lockKey);
+        }
+
+        $write = $this->getWriteObject();
+        $write->setFileName($filename);
+
+        $ret = [];
+        $count_sum = 0;
+        $steps_sum = 0;
+        $data = [];
+        foreach ($tables as $k => $table) {
+            $count = $this->getProviderObject()->tableCount($table);
+            $count_sum += $count;
+            //当前表的总数量
+            $info["count"] = $count;
+            //根据配置得到需要一次性备份多少条
+            $info["limit"] = $limit;
+            //需要请求多少次第二步接口
+            $steps = ceil($count / $limit) + 1;
+            $steps_sum += $steps;
+            $info["steps"] = $steps;
+            $data[$k] = $info;
+
+        }
+        $ret["count"] = $count_sum;
+        $ret["steps"] = $steps_sum;
+        $ret["list"] = $data;
+        if ( ! $filenameObject->copyright($write)) {
+            throw new BackupStepException(1, "File write failure");
+        }
+        Cache::set($this->app, $lockKey, 2);
+        Cache::set($this->app, Cache::TableCounts, $ret);
+        Cache::set($this->app, Cache::File, $filename);
+        Cache::set($this->app, Cache::Tables, $tables);
+
+        return $ret;
+
+    }
+
+    /**
      * 备份数据第二步.
      *
      * @param int $index
@@ -554,7 +610,7 @@ class BackupManager implements BackupInterface
      */
     protected function writeTableData(WriteAbstract $write, $table, $page, $annotation = true)
     {
-        $limit = $this->app->config->get("backup.limit", 100);
+        $limit = $this->getLimit();
 
         return $this->getProviderObject(null, $write)->writeTableData($table, $limit, $page, $annotation);
     }
@@ -565,6 +621,14 @@ class BackupManager implements BackupInterface
     public function getDatabaseConfig()
     {
         return $this->databaseConfig;
+    }
+
+    /**
+     * @return array|mixed
+     */
+    protected function getLimit()
+    {
+        return $this->app->config->get("backup.limit", 100);
     }
 
 }

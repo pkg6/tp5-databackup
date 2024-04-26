@@ -33,6 +33,19 @@ class Mysql implements BuildSQLInterface
      * @param ConnectionInterface $connection
      * @param $table
      *
+     * @return int|mixed
+     *
+     * @throws \think\db\exception\DbException
+     */
+    public function tableCount(ConnectionInterface $connection, $table)
+    {
+        return $connection->table($table)->count();
+    }
+
+    /**
+     * @param ConnectionInterface $connection
+     * @param $table
+     *
      * @return string
      */
     public function optimize(ConnectionInterface $connection, $table = null)
