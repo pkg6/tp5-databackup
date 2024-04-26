@@ -28,6 +28,16 @@ interface BuildSQLInterface
     public function tables(ConnectionInterface $connection);
 
     /**
+     * 获取单表单总数.
+     *
+     * @param ConnectionInterface $connection
+     * @param $table
+     *
+     * @return mixed
+     */
+    public function tableCount(ConnectionInterface $connection, $table);
+
+    /**
      * 优化表
      * 需要判断table如果是字符串表示单表操作，如果是数组就是多表操作.
      *

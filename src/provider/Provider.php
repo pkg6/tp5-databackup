@@ -96,6 +96,11 @@ class Provider implements ProviderInterface
         return $this->buildSQL->tables($this->connection);
     }
 
+    public function tableCount($table)
+    {
+        return $this->buildSQL->tableCount($this->connection, $table);
+    }
+
     /**
      * @param $tables
      *
