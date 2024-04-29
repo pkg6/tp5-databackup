@@ -100,8 +100,7 @@ class FileName
         $sql .= "-- PHP Version : " . phpversion() . PHP_EOL;
         $sql .= "-- Date : " . date("Y-m-d H:i:s") . PHP_EOL;
         $sql .= "-- -----------------------------" . PHP_EOL . PHP_EOL;
-        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
-        $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;
+        $sql .= $this->manager->getProviderObject()->initSQL();
 
         return $write->writeSQL($sql);
     }

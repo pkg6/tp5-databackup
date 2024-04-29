@@ -53,6 +53,14 @@ interface ProviderInterface
     public function setConnection(ConnectionInterface $connection);
 
     /**
+     * 初始化sql
+     * $sql = 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
+     * $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;.
+     *
+     * @return string
+     */
+    public function initSQL();
+    /**
      * 获取所有数据表.
      *
      * @return mixed

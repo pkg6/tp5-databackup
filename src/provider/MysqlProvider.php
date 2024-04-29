@@ -81,6 +81,17 @@ class MysqlProvider implements ProviderInterface
     }
 
     /**
+     * @return string
+     */
+    public function initSQL()
+    {
+        $sql = 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
+        $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;
+
+        return $sql;
+    }
+
+    /**
      * @return array|mixed
      */
     public function tables()
