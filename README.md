@@ -65,11 +65,10 @@ php think backup:cleanup
 
 ## 目录说明
 
-- build 存放sql语句，目前支持mysql，主要是有其他需求需要备份其他数据库的操作，可以自行实现
 - commands 命令脚本目录
 - controller 案例控制器，可以直接继承并重写
 - exception 在处理中出现的异常
-- provider中的是基础方法，都将在`BackupManager.php`具体实现
+- provider 存放sql语句，目前支持mysql，主要是有其他需求需要备份其他数据库的操作，可以自行实现,都将在`BackupManager.php`具体实现
 - task 队列方式
 - validate 参数验证
 - write 写入的方式，目前是sql文件，其他写入需求可以，比如数据库迁移

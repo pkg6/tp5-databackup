@@ -14,21 +14,11 @@
 
 namespace tp5er\Backup;
 
-use tp5er\Backup\build\BuildSQLInterface;
 use tp5er\Backup\provider\ProviderInterface;
 use tp5er\Backup\write\WriteAbstract;
 
 interface BackupInterface
 {
-
-    /**
-     * 设置sql语句.
-     *
-     * @param BuildSQLInterface|null $buildSQL
-     *
-     * @return $this
-     */
-    public function setBuildSQL(BuildSQLInterface $buildSQL = null);
 
     /**
      * @param WriteAbstract $write

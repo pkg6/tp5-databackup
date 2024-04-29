@@ -15,14 +15,22 @@
 namespace tp5er\Backup\provider;
 
 use think\db\ConnectionInterface;
-use tp5er\Backup\build\BuildSQLInterface;
+use tp5er\Backup\exception\SQLExecuteException;
 use tp5er\Backup\exception\WriteException;
 use tp5er\Backup\FileInfo;
 use tp5er\Backup\FileName;
 use tp5er\Backup\write\WriteAbstract;
 
-class Provider implements ProviderInterface
+class MysqlProvider implements ProviderInterface
 {
+    /**
+     * @return string
+     */
+    public function type()
+    {
+        return "mysql";
+    }
+
     /**
      * @var WriteAbstract
      */
@@ -31,10 +39,6 @@ class Provider implements ProviderInterface
      * @var ConnectionInterface
      */
     protected $connection;
-    /**
-     * @var BuildSQLInterface
-     */
-    protected $buildSQL;
     /**
      * @var FileName
      */
@@ -55,7 +59,7 @@ class Provider implements ProviderInterface
     /**
      * @param WriteAbstract $write
      *
-     * @return $this|Provider
+     * @return $this|MysqlProvider
      */
     public function setWrite(WriteAbstract $write)
     {
@@ -67,7 +71,7 @@ class Provider implements ProviderInterface
     /**
      * @param ConnectionInterface $connection
      *
-     * @return $this|Provider
+     * @return $this|MysqlProvider
      */
     public function setConnection(ConnectionInterface $connection)
     {
@@ -77,28 +81,17 @@ class Provider implements ProviderInterface
     }
 
     /**
-     * @param BuildSQLInterface $buildSQL
-     *
-     * @return $this|Provider
-     */
-    public function setBuildSQL(BuildSQLInterface $buildSQL)
-    {
-        $this->buildSQL = $buildSQL;
-
-        return $this;
-    }
-
-    /**
      * @return array|mixed
      */
     public function tables()
     {
-        return $this->buildSQL->tables($this->connection);
+
+        return $this->connection->query("SHOW TABLE STATUS");
     }
 
     public function tableCount($table)
     {
-        return $this->buildSQL->tableCount($this->connection, $table);
+        return $this->connection->table($table)->count();
     }
 
     /**
@@ -108,7 +101,11 @@ class Provider implements ProviderInterface
      */
     public function optimize($tables)
     {
-        return $this->buildSQL->optimize($this->connection, $tables);
+        if (is_array($tables)) {
+            $tables = implode('`,`', $tables);
+        }
+
+        return $this->connection->query("OPTIMIZE TABLE `{$tables}`");
     }
 
     /**
@@ -118,7 +115,11 @@ class Provider implements ProviderInterface
      */
     public function repair($tables)
     {
-        return $this->buildSQL->repair($this->connection, $tables);
+        if (is_array($tables)) {
+            $tables = implode('`,`', $tables);
+        }
+
+        return $this->connection->query("REPAIR TABLE `{$tables}`");
     }
 
     /**
@@ -130,8 +131,7 @@ class Provider implements ProviderInterface
      */
     public function writeTableStructure($table)
     {
-        list($isbackupdata, $createTableSql) = $this->buildSQL->tableStructure($this->connection, $table);
-
+        list($isbackupdata, $createTableSql) = $this->tableStructure($table);
         $sql = PHP_EOL;
         $sql .= "-- ----------------------------" . PHP_EOL;
         $sql .= "-- Table structure for $table" . PHP_EOL;
@@ -147,6 +147,23 @@ class Provider implements ProviderInterface
     }
 
     /**
+     * @param ConnectionInterface $connection
+     * @param $table
+     *
+     * @return array
+     */
+    protected function tableStructure($table)
+    {
+        $result = $this->connection->query("SHOW CREATE TABLE `{$table}`");
+        $sql = trim($result[0]['Create Table'] ?? $result[0]['Create View']);
+        if ( ! empty($result[0]["Create View"])) {
+            return [false, $sql];
+        }
+
+        return [true, $sql];
+    }
+
+    /**
      * @param $table
      * @param $limit
      * @param $page
@@ -158,8 +175,7 @@ class Provider implements ProviderInterface
      */
     public function writeTableData($table, $limit, $page, $annotation = true)
     {
-        list($lastPage, $instertSQL) = $this->buildSQL->tableInstert(
-            $this->connection,
+        list($lastPage, $instertSQL) = $this->tableInstert(
             $table,
             $page,
             $limit
@@ -187,6 +203,50 @@ class Provider implements ProviderInterface
         return $lastPage;
     }
 
+    protected function tableInstert($table, $page = 0, $limit = 100)
+    {
+        if ($page <= 0) {
+            $page = 1;
+        }
+        $offset = ($page - 1) * $limit;
+        $result = $this->connection->query("SELECT * FROM `{$table}` LIMIT {$limit} OFFSET {$offset}");
+        if (count($result) == 0) {
+            return [0, ""];
+        }
+        $tableFieldArr = $this->tableField($result[0]);
+        $sql = "INSERT INTO `{$table}` (" . implode(",", $tableFieldArr) . ") VALUES ";
+        $tableDataArr = [];
+        foreach ($result as &$row) {
+            foreach ($row as &$val) {
+                if (is_numeric($val)) {
+                } elseif (is_null($val)) {
+                    $val = 'NULL';
+                } else {
+                    $val = "'" . str_replace(["\r", "\n"], ['\\r', '\\n'], addslashes($val)) . "'";
+                }
+            }
+            $tableDataArr[] = PHP_EOL . "(" . implode(", ", array_values($row)) . ")";
+        }
+        $sql .= implode(",", $tableDataArr);
+
+        return [$page + 1, $sql];
+    }
+
+    /**
+     * @param array $field
+     *
+     * @return array
+     */
+    protected function tableField(array $field)
+    {
+        $sqlArr = [];
+        foreach ($field as $f => $v) {
+            $sqlArr[$f] = "`{$f}`";
+        }
+
+        return $sqlArr;
+    }
+
     /**
      * @return FileInfo[]
      */
@@ -212,7 +272,21 @@ class Provider implements ProviderInterface
      */
     public function import($sqls)
     {
-        return $this->buildSQL->execute($this->connection, $sqls);
+        if (is_array($sqls)) {
+            foreach ($sqls as $index => $sql) {
+                try {
+                    if ($sql != "") {
+                        $this->connection->execute($sql);
+                    }
+                } catch (\Exception $exception) {
+                    throw  new SQLExecuteException($index, $sql, $exception);
+                }
+            }
+
+            return 1;
+        }
+
+        return $this->connection->execute($sqls);
     }
 
 }

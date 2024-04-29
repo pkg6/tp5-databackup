@@ -18,14 +18,12 @@ use InvalidArgumentException;
 use think\App;
 use think\db\ConnectionInterface;
 use think\helper\Arr;
-use tp5er\Backup\build\BuildSQLInterface;
-use tp5er\Backup\build\Mysql;
 use tp5er\Backup\exception\BackupStepException;
 use tp5er\Backup\exception\ClassDefineException;
 use tp5er\Backup\exception\FileNotException;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\exception\WriteException;
-use tp5er\Backup\provider\Provider;
+use tp5er\Backup\provider\MysqlProvider;
 use tp5er\Backup\provider\ProviderInterface;
 use tp5er\Backup\write\SQLFileWrite;
 use tp5er\Backup\write\WriteAbstract;
@@ -42,10 +40,6 @@ class BackupManager implements BackupInterface
      */
     protected $app;
 
-    /**
-     * @var BuildSQLInterface
-     */
-    protected $buildSQL;
     /**
      * 当前备份的数据库名称.
      *
@@ -71,10 +65,17 @@ class BackupManager implements BackupInterface
     public $writes = [
         SQLFileWrite::ext => SQLFileWrite::class,
     ];
-    /**
-     * @var Provider|ProviderInterface
-     */
-    protected $provider;
+
+    //vendor/topthink/think-orm/src/db/connector
+    protected $providers = [
+//        "mysql" => new MysqlProvider::class,
+//        "mongo"  => "",
+//        "oracle" => "",
+//        "pgsql"  => "",
+//        "sqlite" => "",
+//        "sqlsrv" => "",
+
+    ];
 
     /**
      * 当前备份哪一个表.
@@ -92,7 +93,6 @@ class BackupManager implements BackupInterface
     {
         $this->app = $app;
         $this->setVersion();
-        $this->setBuildSQL();
         $this->database();
         $this->setProvider();
     }
@@ -105,30 +105,6 @@ class BackupManager implements BackupInterface
         $fileName = new FileName($this, $this->app);
 
         return $fileName;
-    }
-
-    /**
-     * 设置sql语句.
-     *
-     * @param BuildSQLInterface|null $buildSQL
-     *
-     * @return $this
-     *
-     * @throws ClassDefineException
-     */
-    public function setBuildSQL(BuildSQLInterface $buildSQL = null)
-    {
-        if ($buildSQL === null) {
-            $sqlClass = $this->app->config->get("backup.build", Mysql::class);
-            if (is_subclass_of($sqlClass, BuildSQLInterface::class)) {
-                $buildSQL = new $sqlClass;
-            } else {
-                throw new ClassDefineException($sqlClass, BuildSQLInterface::class);
-            }
-        }
-        $this->buildSQL = $buildSQL;
-
-        return $this;
     }
 
     /**
@@ -240,12 +216,10 @@ class BackupManager implements BackupInterface
     public function setProvider(ProviderInterface $provider = null)
     {
         if (is_null($provider)) {
-            $provider = new Provider();
-
+            $provider = new MysqlProvider();
         }
-        $this->provider = $provider;
-        $this->provider->setFileName($this->getFileNameObject());
-        $this->provider->setBuildSQL($this->buildSQL);
+        $provider->setFileName($this->getFileNameObject());
+        $this->providers[$provider->type()] = $provider;
 
         return $this;
     }
@@ -266,7 +240,20 @@ class BackupManager implements BackupInterface
         if (is_null($connection)) {
             $connection = $this->connectionName;
         }
-        $provider = $this->provider;
+
+        $connections = $this->app->config->get("database.connections");
+        $type = "mysql";
+        if (isset($connections[$connection]["type"])) {
+            $type = $connections[$connection]["type"];
+        }
+
+        if ( ! isset($this->providers[$type])) {
+            throw new InvalidArgumentException('Not supported ' . $type);
+        }
+        /**
+         * @var ProviderInterface $provider
+         */
+        $provider = $this->providers[$type];
         if (is_string($connection)) {
             $provider->setConnection($this->app->get("db")->connect($connection));
         } elseif (is_subclass_of($connection, ConnectionInterface::class)) {
@@ -361,6 +348,7 @@ class BackupManager implements BackupInterface
      * 可作为备份第一步，用于前端进度条
      *
      * @param array $tables
+     *
      * @return array
      *
      * @throws BackupStepException

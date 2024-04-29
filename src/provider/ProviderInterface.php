@@ -15,13 +15,18 @@
 namespace tp5er\Backup\provider;
 
 use think\db\ConnectionInterface;
-use tp5er\Backup\build\BuildSQLInterface;
 use tp5er\Backup\FileName;
 use tp5er\Backup\write\WriteAbstract;
 
 interface ProviderInterface
 {
 
+    /**
+     * vendor/top-think/think-orm/src/db/connector.
+     *
+     * @return string
+     */
+    public function type();
     /**
      * @param FileName $fileName
      *
@@ -46,15 +51,6 @@ interface ProviderInterface
      * @return $this
      */
     public function setConnection(ConnectionInterface $connection);
-
-    /**
-     * 设置基本的数据查询方式.
-     *
-     * @param BuildSQLInterface $buildSQL
-     *
-     * @return $this
-     */
-    public function setBuildSQL(BuildSQLInterface $buildSQL);
 
     /**
      * 获取所有数据表.
