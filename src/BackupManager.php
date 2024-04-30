@@ -18,171 +18,104 @@ use InvalidArgumentException;
 use think\App;
 use think\db\ConnectionInterface;
 use think\helper\Arr;
-use tp5er\Backup\build\BuildSQLInterface;
-use tp5er\Backup\build\Mysql;
 use tp5er\Backup\exception\BackupStepException;
-use tp5er\Backup\exception\ClassDefineException;
-use tp5er\Backup\exception\FileNotException;
 use tp5er\Backup\exception\LockException;
-use tp5er\Backup\exception\WriteException;
-use tp5er\Backup\provider\Provider;
-use tp5er\Backup\provider\ProviderInterface;
-use tp5er\Backup\write\SQLFileWrite;
-use tp5er\Backup\write\WriteAbstract;
+use tp5er\Backup\reader\Mysql;
+use tp5er\Backup\reader\ReaderInterface;
+use tp5er\Backup\writer\SQLFileWriter;
+use tp5er\Backup\writer\WriterInterface;
 
 class BackupManager implements BackupInterface
 {
 
     /**
-     * @var string
-     */
-    protected $version = "";
-    /**
      * @var App
      */
     protected $app;
 
+    protected $config = [
+        "default" => "file",
+        "backups" => [
+            "file" => [
+                //目前只支持sql文件
+                "write_type" => 'file',
+                //读取生成sql语句的类
+                "reader_type" => 'mysql',
+                //sql文件存储路径
+                "path" => "./backup",
+            ]
+        ],
+        //一次请求存储100条数据
+        "limit" => 100,
+    ];
     /**
-     * @var BuildSQLInterface
+     * @var array|\ArrayAccess|mixed
      */
-    protected $buildSQL;
+    protected $version;
     /**
-     * 当前备份的数据库名称.
-     *
+     * @var array
+     */
+    protected $databaseConfig;
+    /**
      * @var string
      */
     protected $database;
     /**
-     * 数据库链接别名在,database.php 中connections 中某一个key值
-     *
      * @var string
      */
     protected $connectionName;
+
     /**
-     * 当前数据库的配置.
-     *
-     * @var array
+     * @var ConnectionInterface
      */
-    protected $databaseConfig = [];
+    protected $connection;
 
     /**
      * @var string[]
      */
-    public $writes = [
-        SQLFileWrite::ext => SQLFileWrite::class,
+    public $writers = [
+//        "sql" => SQLFileWriter::class,
     ];
-    /**
-     * @var Provider|ProviderInterface
-     */
-    protected $provider;
 
     /**
-     * 当前备份哪一个表.
-     *
+     * @var array
+     */
+    protected $readers = [
+//        "mysql" =>  Mysql::class,
+//        "mongo"  => "",
+//        "oracle" => "",
+//        "pgsql"  => "",
+//        "sqlite" => "",
+//        "sqlsrv" => "",
+    ];
+    /**
      * @var string
      */
-    protected $currentBackupTable = "";
+    protected $currentReaderType;
+    /**
+     * @var string
+     */
+    protected $currentWriteType;
+    /**
+     * @var mixed
+     */
+    protected $currentBackupTable;
 
     /**
      * @param App $app
-     *
-     * @throws ClassDefineException
      */
     public function __construct(App $app)
     {
         $this->app = $app;
         $this->setVersion();
-        $this->setBuildSQL();
-        $this->database();
-        $this->setProvider();
+
+        //设置默认的
+        $this->setWriter(new SQLFileWriter());
+        $this->setReader(new Mysql());
+        $this->config = array_merge($this->config, $this->app->config->get("backup"));
     }
 
     /**
-     * @return FileName
-     */
-    public function getFileNameObject()
-    {
-        $fileName = new FileName($this, $this->app);
-
-        return $fileName;
-    }
-
-    /**
-     * 设置sql语句.
-     *
-     * @param BuildSQLInterface|null $buildSQL
-     *
-     * @return $this
-     *
-     * @throws ClassDefineException
-     */
-    public function setBuildSQL(BuildSQLInterface $buildSQL = null)
-    {
-        if ($buildSQL === null) {
-            $sqlClass = $this->app->config->get("backup.build", Mysql::class);
-            if (is_subclass_of($sqlClass, BuildSQLInterface::class)) {
-                $buildSQL = new $sqlClass;
-            } else {
-                throw new ClassDefineException($sqlClass, BuildSQLInterface::class);
-            }
-        }
-        $this->buildSQL = $buildSQL;
-
-        return $this;
-    }
-
-    /**
-     * @param WriteAbstract $write
-     *
-     * @return $this
-     */
-    public function setWrite(WriteAbstract $write)
-    {
-        $this->writes[$write->ext()] = $write;
-
-        return $this;
-    }
-
-    /**
-     * @param null|string $type
-     *
-     * @return WriteAbstract
-     *
-     * @throws ClassDefineException
-     */
-    public function getWriteObject($writeType = null)
-    {
-        if (is_null($writeType)) {
-            $writeType = $this->app->config->get("backup.default", "sql");
-        }
-        $backups = $this->app->config->get("backup.backups");
-        if ( ! isset($backups[$writeType])) {
-            throw new InvalidArgumentException('Undefined backups config:' . $writeType);
-        }
-        if ( ! isset($backups[$writeType]["type"])) {
-            throw new InvalidArgumentException('Undefined backups.type config:' . $writeType);
-        }
-        $backupclass = $backups[$writeType]["type"];
-        if (class_exists($backupclass)) {
-            $writeObject = new $backupclass;
-            if ( ! is_subclass_of($writeObject, WriteAbstract::class)) {
-                throw new ClassDefineException($backupclass, WriteAbstract::class);
-            }
-        } elseif (isset($this->writes[$backupclass])) {
-            $writeObject = new $this->writes[$backupclass];
-        }
-        if (isset($writeObject)) {
-            $writeObject->setApp($this->app);
-            $writeObject->setManager($this);
-
-            return $writeObject;
-        }
-        throw new InvalidArgumentException("Unable to find {$backupclass} write method");
-    }
-
-    /**
-     * 根据composer.json 设置版本号.
-     *
      * @return void
      */
     protected function setVersion()
@@ -192,9 +125,7 @@ class BackupManager implements BackupInterface
     }
 
     /**
-     * 获取版本号.
-     *
-     * @return string
+     * @return array|\ArrayAccess|mixed|string
      */
     public function getVersion()
     {
@@ -202,9 +133,116 @@ class BackupManager implements BackupInterface
     }
 
     /**
-     * 选中需要备份的数据库.
+     * @param $name
      *
-     * @param string $connectionName
+     * @return array
+     */
+    public function config($name = null)
+    {
+        if (is_null($name)) {
+            $name = Arr::get($this->config, "default", "file");
+        }
+        $backups = Arr::get($this->config, "backups");
+        if (empty($backups[$name])) {
+            throw new InvalidArgumentException('Undefined backups config:' . $name);
+        }
+
+        return $backups[$name];
+    }
+
+    /**
+     * @param WriterInterface $writer
+     *
+     * @return $this
+     */
+    public function setWriter(WriterInterface $writer)
+    {
+        $this->writers[$writer->type()] = $writer;
+
+        return $this;
+    }
+
+    /**
+     * @param $writeType
+     *
+     * @return WriterInterface
+     */
+    public function getWriter($writeType = null)
+    {
+        if (is_null($writeType)) {
+            $config = $this->config();
+            $writeType = Arr::get($config, "write_type", "file");
+        }
+        if (class_exists($writeType)) {
+            if (is_subclass_of($writeType, WriterInterface::class)) {
+                $this->setWriter($writeType);
+            }
+        }
+        if (isset($this->writers[$writeType])) {
+            $this->currentWriteType = $writeType;
+            $writer = new     $this->writers[$writeType];
+
+            return $writer;
+        }
+        throw new InvalidArgumentException("Unable to find {$writeType} writer method");
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrentWriterType()
+    {
+        return $this->currentWriteType;
+    }
+
+    /**
+     * @param ReaderInterface|null $reader
+     *
+     * @return $this
+     */
+    public function setReader(ReaderInterface $reader = null)
+    {
+        $this->readers[$reader->type()] = $reader;
+
+        return $this;
+    }
+
+    /**
+     * @param $readerType
+     *
+     * @return ReaderInterface
+     */
+    public function getReader($readerType = null)
+    {
+        if (is_null($readerType)) {
+            $config = $this->config();
+            $readerType = Arr::get($config, "reader_type", "mysql");
+        }
+        if (class_exists($readerType)) {
+            if (is_subclass_of($readerType, ReaderInterface::class)) {
+                $this->setReader($readerType);
+            }
+        }
+        if (isset($this->readers[$readerType])) {
+            $this->currentReaderType = $readerType;
+
+            $writer = $this->readers[$readerType];
+
+            return $writer;
+        }
+        throw new InvalidArgumentException("Unable to find {$readerType} reader method");
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrentReaderType()
+    {
+        return $this->currentReaderType;
+    }
+
+    /**
+     * @param $connectionName
      *
      * @return $this
      */
@@ -220,6 +258,7 @@ class BackupManager implements BackupInterface
         $this->databaseConfig = $connections[$connectionName];
         $this->database = Arr::get($this->databaseConfig, "database");
         $this->connectionName = $connectionName;
+        $this->connection = $this->app->get("db")->connect($this->connectionName);
 
         return $this;
     }
@@ -233,124 +272,105 @@ class BackupManager implements BackupInterface
     }
 
     /**
-     * @param ProviderInterface|null $provider
-     *
-     * @return $this
-     */
-    public function setProvider(ProviderInterface $provider = null)
-    {
-        if (is_null($provider)) {
-            $provider = new Provider();
-
-        }
-        $this->provider = $provider;
-        $this->provider->setFileName($this->getFileNameObject());
-        $this->provider->setBuildSQL($this->buildSQL);
-
-        return $this;
-    }
-
-    /**
-     * @param string|ConnectionInterface $connection
-     * 为null的时候读取database.php默认的配置
-     * 为字符串时候，读取自定义链接信息
-     * 为ConnectionInterface时候就走用户自定义
-     * @param string|WriteAbstract $writeType
-     *
-     * @return ProviderInterface
-     *
-     * @throws ClassDefineException
-     */
-    public function getProviderObject($connection = null, $writeType = null)
-    {
-        if (is_null($connection)) {
-            $connection = $this->connectionName;
-        }
-        $provider = $this->provider;
-        if (is_string($connection)) {
-            $provider->setConnection($this->app->get("db")->connect($connection));
-        } elseif (is_subclass_of($connection, ConnectionInterface::class)) {
-            $provider->setConnection($connection);
-        } else {
-            $provider->setConnection($this->app->get("db"));
-        }
-
-        if (is_subclass_of($writeType, WriteAbstract::class)) {
-            $provider->setWrite($writeType);
-        } else {
-            $provider->setWrite($this->getWriteObject($writeType));
-        }
-
-        return $provider;
-    }
-
-    /**
-     * 数据库表列表.
-     *
      * @return array
+     */
+    public function getDatabaseConfig()
+    {
+        return $this->databaseConfig;
+    }
+
+    /**
+     * @return string
+     */
+    public function getConnectionName()
+    {
+        return $this->connectionName;
+    }
+
+    /**
+     * @return ConnectionInterface
+     */
+    public function getConnection()
+    {
+        return $this->connection;
+    }
+
+    /**
+     * @param $databaseName
+     * @param $writeType
+     * @param $readerType
      *
-     * @throws ClassDefineException
+     * @return Factory
+     */
+    public function factory($name = null, $databaseName = null, $writeType = null, $readerType = null)
+    {
+        $this->database($databaseName);
+        $write = $this->getWriter($writeType);
+        $reader = $this->getReader($readerType);
+
+        return new Factory(
+            $this->app,
+            $this,
+            $this->getConnection(),
+            $write,
+            $reader,
+            $this->config($name)
+        );
+    }
+
+    /**
+     * @return array
      */
     public function tables()
     {
-        return $this->getProviderObject()->tables();
+        return $this->factory()->getReader()->tables();
     }
 
     /**
-     * 优化表.
+     * @param $tables
      *
-     * @param String|array $tables 表名
-     *
-     * @throws \Exception
+     * @return mixed|void
      */
     public function optimize($tables = null)
     {
-        return $this->getProviderObject()->optimize($tables);
+        return $this->factory()->getReader()->optimize($tables);
     }
 
     /**
-     * 修复表.
+     * @param $tables
      *
-     * @param string|array $tables 表名
-     *
-     * @throws \Exception
+     * @return mixed|void
      */
     public function repair($tables)
     {
-        return $this->getProviderObject()->repair($tables);
+        return $this->factory()->getReader()->repair($tables);
     }
 
     /**
-     * 备份第一步.
+     * @param array $tables
      *
-     * @param string|array $tables 写入的数据表
+     * @return mixed
      *
-     * @return bool
-     *
-     * @throws LockException|ClassDefineException
+     * @throws LockException
      */
     public function backupStep1(array $tables)
     {
-        $filenameObject = $this->getFileNameObject();
-        $filename = $filenameObject->generateFileName($this->database, $this->connectionName);
+        $factory = $this->factory();
+        $writer = $factory->getWriter();
+        $filename = $writer->generateFileName();
         $lockKey = Cache::LockPrefix . crc32($filename . json_encode($tables));
         if ($this->app->cache->has($lockKey)) {
             throw new LockException($lockKey);
         }
-        $write = $this->getWriteObject();
-        $write->setFileName($filename);
-
         Cache::set($this->app, $lockKey, 1);
         Cache::set($this->app, Cache::File, $filename);
         Cache::set($this->app, Cache::Tables, $tables);
 
-        return $filenameObject->copyright($write);
+        return $writer->writeSQL($factory->getReader()->copyright($this));
     }
 
     /**
-     * 当前备份的文件名称.
-     *
-     * @return string
+     * @return string|void
      */
     public function getCurrentBackupFile()
     {
@@ -360,32 +380,30 @@ class BackupManager implements BackupInterface
     /**
      * 可作为备份第一步，用于前端进度条
      *
-     * @param array $tables
+     * @param $tables
+     *
      * @return array
      *
      * @throws BackupStepException
-     * @throws ClassDefineException
      * @throws LockException
      */
     public function tableCounts($tables)
     {
         $limit = $this->getLimit();
-        $filenameObject = $this->getFileNameObject();
-        $filename = $filenameObject->generateFileName($this->database, $this->connectionName);
+        $factory = $this->factory();
+        $writer = $factory->getWriter();
+        $filename = $writer->generateFileName();
+
         $lockKey = Cache::LockPrefix . crc32($filename . json_encode($tables));
         if ($this->app->cache->has($lockKey)) {
             throw new LockException($lockKey);
         }
-
-        $write = $this->getWriteObject();
-        $write->setFileName($filename);
-
         $ret = [];
         $count_sum = 0;
         $steps_sum = 0;
         $data = [];
         foreach ($tables as $k => $table) {
-            $count = $this->getProviderObject()->tableCount($table);
+            $count = $factory->getReader()->tableCount($table);
             $count_sum += $count;
             //当前表的总数量
             $info["count"] = $count;
@@ -401,66 +419,73 @@ class BackupManager implements BackupInterface
         $ret["count"] = $count_sum;
         $ret["steps"] = $steps_sum;
         $ret["list"] = $data;
-        if ( ! $filenameObject->copyright($write)) {
-            throw new BackupStepException(1, "File write failure");
-        }
         Cache::set($this->app, $lockKey, 2);
         Cache::set($this->app, Cache::TableCounts, $ret);
         Cache::set($this->app, Cache::File, $filename);
         Cache::set($this->app, Cache::Tables, $tables);
+        if ( ! $writer->writeSQL($factory->getReader()->copyright($this))) {
+            throw new BackupStepException(1, "File write failure");
+        }
 
         return $ret;
-
     }
 
     /**
-     * 备份数据第二步.
+     * @param $index
+     * @param $page
      *
-     * @param int $index
-     * @param int $page
-     *
-     * @return int
-     *  当page <=0 表示该表已备份完毕
-     *  当page > 0 表示该表需要继续进行备份
+     * @return mixed|void
      *
      * @throws BackupStepException
-     * @throws ClassDefineException
-     * @throws WriteException
      */
     public function backupStep2($index = 0, $page = 0)
     {
-        $filename = $this->app->cache->get(Cache::File);
         if ( ! $this->app->cache->has(Cache::File)) {
             throw new BackupStepException(2, "Unable to find file cache");
         }
-
-        $write = $this->getWriteObject();
-        $write->setFileName($filename);
+        $filename = $this->getCurrentBackupFile();
+        $factory = $this->factory();
 
         $tables = $this->app->cache->get(Cache::Tables);
+
         // 没有表可以进行备份
         if ( ! isset($tables[$index])) {
             return OPT::backupPageTableDoesNotExist;
         }
+
+        $limit = $this->getLimit();
         $this->currentBackupTable = $tables[$index];
 
         $cahceKey = Cache::Table . $filename . "-" . $this->getCurrentBackupTable();
+
         if ($this->app->cache->has($cahceKey)) {
-            // 有此缓存在标识我认为你已经备份完表结果以及部分数据
-            $lastPage = $this->writeTableData($write, $this->getCurrentBackupTable(), $page, false);
-            if ((int) $lastPage === 0) {
-                $this->app->cache->delete($cahceKey);
-            } else {
+            list($dataSQL, $lastPage) = $factory->getReader()
+                ->tableData(
+                    $this->getCurrentBackupTable(),
+                    $limit,
+                    $page,
+                    false
+                );
+            if ($lastPage > 0) {
+                $factory->getWriter()->writeSQL($dataSQL);
                 Cache::set($this->app, $cahceKey, $lastPage);
+            } else {
+                $this->app->cache->delete($cahceKey);
             }
 
             return $lastPage;
         } else {
             // 首先进行备份表结果，然后判断是否进行备份表数据
-            $isBackupdata = $this->writeTableStructure($write, $this->getCurrentBackupTable());
-            if ($isBackupdata) {
-                $lastPage = $this->writeTableData($write, $this->getCurrentBackupTable(), $page);
-                if ((int) $lastPage === 0) {
+            list($sql, $isBackupData) = $factory->getReader()->tableStructure($this->getCurrentBackupTable());
+            $factory->getWriter()->writeSQL($sql);
+            if ($isBackupData) {
+                list($dataSQL, $lastPage) = $factory->getReader()->tableData(
+                    $this->getCurrentBackupTable(),
+                    $limit,
+                    $page
+                );
+                $factory->getWriter()->writeSQL($dataSQL);
+                if ($lastPage <= 0) {
                     $this->app->cache->delete($cahceKey);
                 } else {
                     Cache::set($this->app, $cahceKey, $lastPage);
@@ -471,11 +496,15 @@ class BackupManager implements BackupInterface
         }
 
         return OPT::backupPageTableOver;
+
+    }
+
+    protected function getLimit()
+    {
+        return Arr::get($this->config, "limit", 100);
     }
 
     /**
-     * 当前备份正在执行的表.
-     *
      * @return string
      */
     public function getCurrentBackupTable()
@@ -484,23 +513,15 @@ class BackupManager implements BackupInterface
     }
 
     /**
-     * 备份表数据.
-     *
      * @param $tables
      *
-     * @return array
-     *
-     * @throws ClassDefineException
-     * @throws LockException
+     * @return mixed|void
      */
     public function backup($tables)
     {
         $ret = [];
-        //任务创建成功
         if ($this->backupStep1($tables)) {
-            //备份所有表数据
             foreach ($tables as $index => $table) {
-                //我相信在数据库中不会出现表重复表名吧
                 $lastPage = $this->backupAllData($index);
                 if ($lastPage === 0) {
                     $ret[$table] = true;
@@ -521,10 +542,6 @@ class BackupManager implements BackupInterface
      * @param $page
      *
      * @return int
-     *
-     * @throws BackupStepException
-     * @throws ClassDefineException
-     * @throws WriteException
      */
     protected function backupAllData($index = 0, $page = 1)
     {
@@ -538,8 +555,6 @@ class BackupManager implements BackupInterface
     }
 
     /**
-     * 根据tag清理缓存.
-     *
      * @return void
      */
     public function cleanup()
@@ -548,87 +563,23 @@ class BackupManager implements BackupInterface
     }
 
     /**
-     * 获取所有已备份的文件.
-     *
-     * @return FileInfo[]
-     *
-     * @throws ClassDefineException
+     * @return
      */
     public function files()
     {
-        return $this->getProviderObject()->files();
+        return $this->factory()->getWriter()->files();
     }
 
     /**
      * @param $fileName
      *
-     * @return int
-     *
-     * @throws ClassDefineException
+     * @return mixed
      */
     public function import($fileName)
     {
-        $fileName = $this->getFileNameObject()->generateFullPathFile($fileName);
-        if ( ! file_exists($fileName)) {
-            throw new FileNotException($fileName);
-        }
-        list($_, $_, $ext, $_) = $this->getFileNameObject()->fileNameDatabaseConnectionNameExt($fileName);
-        $write = $this->getWriteObject($ext);
-        $sqls = $write->readSQL($fileName);
-        $provider = $this->getProviderObject(null, $write);
+        $factory = $this->factory();
+        $sqls = $factory->getWriter()->readSQL($fileName);
 
-        return $provider->import($sqls);
+        return $factory->getReader()->import($sqls);
     }
-
-    /**
-     * 写入表结构.
-     *
-     * @param WriteAbstract $write
-     * @param $table
-     *
-     * @return mixed
-     *
-     * @throws WriteException|ClassDefineException
-     */
-    protected function writeTableStructure(WriteAbstract $write, $table)
-    {
-        return $this->getProviderObject(null, $write)->writeTableStructure($table);
-    }
-
-    /**
-     * 备份数据.
-     *
-     * @param WriteAbstract $write
-     * @param $table
-     * @param $page
-     * @param bool $annotation
-     *
-     * @return int|mixed
-     *
-     * @throws ClassDefineException
-     * @throws WriteException
-     */
-    protected function writeTableData(WriteAbstract $write, $table, $page, $annotation = true)
-    {
-        $limit = $this->getLimit();
-
-        return $this->getProviderObject(null, $write)->writeTableData($table, $limit, $page, $annotation);
-    }
-
-    /**
-     * @return array
-     */
-    public function getDatabaseConfig()
-    {
-        return $this->databaseConfig;
-    }
-
-    /**
-     * @return array|mixed
-     */
-    protected function getLimit()
-    {
-        return $this->app->config->get("backup.limit", 100);
-    }
-
 }

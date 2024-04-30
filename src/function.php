@@ -12,7 +12,22 @@
  * This source file is subject to the MIT license that is bundled.
  */
 
-use tp5er\Backup\facade\Backup;
+if ( ! function_exists('mkdirs')) {
+
+    /**
+     * 创建目录.
+     *
+     * @param $path
+     *
+     * @return void
+     */
+    function mkdirs($path)
+    {
+        if ( ! file_exists($path)) {
+            mkdir($path, 0755, true);
+        }
+    }
+}
 
 if ( ! function_exists('format_bytes')) {
     /**
@@ -89,7 +104,7 @@ if ( ! function_exists('backup_run')) {
      */
     function backup_run($data)
     {
-        $backup = Backup::database($data["database"]);
+        $backup = \tp5er\Backup\facade\Backup::database($data["database"]);
         switch ($data['opt']) {
             case \tp5er\Backup\OPT::backup:
                 return $backup->backup($data['tables']);

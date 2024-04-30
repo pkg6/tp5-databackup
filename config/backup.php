@@ -13,15 +13,17 @@
  */
 
 return [
-    "default" => "sql",
-    "path" => app()->getRootPath() . "backup",
+    "default" => "file",
     "backups" => [
-        "sql" => [
-            "type" => 'sql',
+        "file" => [
+            //目前只支持sql文件
+            "write_type" => 'file',
+            //读取生成sql语句的类
+            "reader_type" => 'mysql',
+            //sql文件存储路径
+            "path" => app()->getRootPath() . "backup",
         ]
     ],
     //一次请求存储100条数据
     "limit" => 100,
-    //生成sql语句的class（目前支持mysql,如需其他可以参考自行修改）
-    "build" => \tp5er\Backup\build\Mysql::class,
 ];
