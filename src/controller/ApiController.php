@@ -206,7 +206,7 @@ class ApiController
             return $this->success([
                 'index' => $index,
                 'page' => $lastPage,
-                "table" => $this->backupManager()->getCurrentBackupTable()
+                "table" => $this->databaseBackup()->getCurrentBackupTable()
             ], $msg);
         }
     }

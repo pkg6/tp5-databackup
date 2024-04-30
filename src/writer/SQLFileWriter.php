@@ -188,11 +188,12 @@ class SQLFileWriter implements WriterInterface
     {
         $list = [];
         $glob = new \FilesystemIterator($this->path(), \FilesystemIterator::KEY_AS_FILENAME);
+        /* @var \SplFileInfo $file */
         foreach ($glob as $file) {
-            /* var \SplFileInfo $file*/
-            $list[] = $this->SplFileInfo($file);
+            if ($file->isFile()){
+                $list[] = $this->SplFileInfo($file);
+            }
         }
-
         return $list;
     }
 
