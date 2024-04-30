@@ -16,17 +16,11 @@ namespace tp5er\Backup\facade;
 
 use think\Facade;
 use tp5er\Backup\BackupInterface;
-use tp5er\Backup\build\BuildSQLInterface;
-use tp5er\Backup\FileInfo;
-use tp5er\Backup\provider\ProviderInterface;
-use tp5er\Backup\write\WriteAbstract;
+use tp5er\Backup\writer\file\FileInfo;
 
 /**
  * Class Backup.
  *
- * @method static BackupInterface setBuildSQL(BuildSQLInterface $buildSQL = null)
- * @method static BackupInterface setWrite(WriteAbstract $write)
- * @method static ProviderInterface getProviderObject($connection = null, $writeType = null)
  * @method static BackupInterface database($database = null)
  * @method static array tables()
  * @method static mixed optimize($tables = null)

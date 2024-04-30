@@ -12,31 +12,33 @@
  * This source file is subject to the MIT license that is bundled.
  */
 
-namespace tp5er\Backup\provider;
+namespace tp5er\Backup\reader;
 
+use think\App;
 use think\db\ConnectionInterface;
-use tp5er\Backup\build\BuildSQLInterface;
-use tp5er\Backup\FileName;
-use tp5er\Backup\write\WriteAbstract;
+use tp5er\Backup\BackupInterface;
 
-interface ProviderInterface
+interface ReaderInterface
 {
 
     /**
-     * @param FileName $fileName
+     * @param App $app
      *
-     * @return $this
+     * @return mixed
      */
-    public function setFileName(FileName $fileName);
+    public function setApp(App $app);
 
     /**
-     * 设置写入方式.
+     * @param $config
      *
-     * @param WriteAbstract $write
-     *
-     * @return $this
+     * @return mixed
      */
-    public function setWrite(WriteAbstract $write);
+    public function setConfig($config);
+
+    /**
+     * @return string
+     */
+    public function type();
 
     /**
      * 设置数据库连接.
@@ -48,13 +50,13 @@ interface ProviderInterface
     public function setConnection(ConnectionInterface $connection);
 
     /**
-     * 设置基本的数据查询方式.
+     * 初始化sql
+     * $sql = 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
+     * $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;.
      *
-     * @param BuildSQLInterface $buildSQL
-     *
-     * @return $this
+     * @return string
      */
-    public function setBuildSQL(BuildSQLInterface $buildSQL);
+    public function copyright(BackupInterface $backup);
 
     /**
      * 获取所有数据表.
@@ -86,9 +88,10 @@ interface ProviderInterface
      *
      * @param $table
      *
-     * @return bool
+     * @return  []
+     * 返回数组 第一个 生成sql语句，第二个是否备份数据
      */
-    public function writeTableStructure($table);
+    public function tableStructure($table);
 
     /**
      * 写入表数据.
@@ -98,16 +101,10 @@ interface ProviderInterface
      * @param int $page 分页数量
      * @param bool $annotation 是否加入注释
      *
-     * @return int
-     */
-    public function writeTableData($table, $limit, $page, $annotation = true);
-
-    /**
-     * 获取所有已经备份好的文件.
-     *
      * @return array
+     * 返回 第一个生成sql语句 第二个下一个向量
      */
-    public function files();
+    public function tableData($table, $limit, $page, $annotation = true);
 
     /**
      * 导入sql语句.
