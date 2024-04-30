@@ -41,6 +41,10 @@ class Factory
      * @var ReaderInterface
      */
     protected $reader;
+    /**
+     * @var array
+     */
+    protected $config;
 
     public function __construct(
         App                 $app,
