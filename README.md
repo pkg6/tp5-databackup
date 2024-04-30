@@ -71,6 +71,10 @@ Factory：定义reader和writer对象初始化
 
 BackupManager：所有的相关操作都在这里
 
+## 版本修改记录
+
+[CHANGELOG.md](https://github.com/pkg6/think-backup/blob/main/CHANGELOG.md)
+
 ## 提交代码规范
 
 1. fork一份代码到自己账号下,生成如 `test/tp5-databackup`
