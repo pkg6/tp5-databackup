@@ -12,17 +12,46 @@
  * This source file is subject to the MIT license that is bundled.
  */
 
-namespace tp5er\Backup\provider;
+namespace tp5er\Backup\reader;
 
+use think\App;
 use think\db\ConnectionInterface;
+use think\helper\Arr;
+use tp5er\Backup\BackupInterface;
 use tp5er\Backup\exception\SQLExecuteException;
 use tp5er\Backup\exception\WriteException;
-use tp5er\Backup\FileInfo;
-use tp5er\Backup\FileName;
-use tp5er\Backup\write\WriteAbstract;
 
-class MysqlProvider implements ProviderInterface
+class Mysql implements ReaderInterface
 {
+    /**
+     * @var App
+     */
+    protected $app;
+    /**
+     * @var
+     */
+    protected $config;
+
+    /**
+     * @param App $app
+     *
+     * @return void
+     */
+    public function setApp(App $app)
+    {
+        $this->app = $app;
+    }
+
+    /**
+     * @param $config
+     *
+     * @return mixed|void
+     */
+    public function setConfig($config)
+    {
+        $this->config = $config;
+    }
+
     /**
      * @return string
      */
@@ -32,46 +61,15 @@ class MysqlProvider implements ProviderInterface
     }
 
     /**
-     * @var WriteAbstract
-     */
-    protected $write;
-    /**
      * @var ConnectionInterface
      */
     protected $connection;
-    /**
-     * @var FileName
-     */
-    protected $filename;
 
-    /**
-     * @param FileName $fileName
-     *
-     * @return $this
-     */
-    public function setFileName(FileName $fileName)
-    {
-        $this->filename = $fileName;
-
-        return $this;
-    }
-
-    /**
-     * @param WriteAbstract $write
-     *
-     * @return $this|MysqlProvider
-     */
-    public function setWrite(WriteAbstract $write)
-    {
-        $this->write = $write;
-
-        return $this;
-    }
 
     /**
      * @param ConnectionInterface $connection
      *
-     * @return $this|MysqlProvider
+     * @return $this|Mysql
      */
     public function setConnection(ConnectionInterface $connection)
     {
@@ -81,11 +79,28 @@ class MysqlProvider implements ProviderInterface
     }
 
     /**
+     * @param BackupInterface $backup
+     *
      * @return string
      */
-    public function initSQL()
+    public function copyright(BackupInterface $backup)
     {
-        $sql = 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
+
+        $config = $backup->getDatabaseConfig();
+        $hostname = Arr::get($config, "hostname");
+        $hostport = Arr::get($config, "hostport");
+        $sql = "-- -----------------------------" . PHP_EOL;
+        $sql .= "-- tp5-databackup SQL Dump " . PHP_EOL;
+        $sql .= "-- version " . $backup->getVersion() . PHP_EOL;
+        $sql .= "-- https://github.com/pkg6/tp5-databackup " . PHP_EOL;
+        $sql .= "-- " . PHP_EOL;
+        $sql .= "-- Host     : " . $hostname . PHP_EOL;
+        $sql .= "-- Port     : " . $hostport . PHP_EOL;
+        $sql .= "-- Database : " . $backup->getDatabase() . PHP_EOL;
+        $sql .= "-- PHP Version : " . phpversion() . PHP_EOL;
+        $sql .= "-- Date : " . date("Y-m-d H:i:s") . PHP_EOL;
+        $sql .= "-- -----------------------------" . PHP_EOL . PHP_EOL;
+        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
         $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;
 
         return $sql;
@@ -96,7 +111,6 @@ class MysqlProvider implements ProviderInterface
      */
     public function tables()
     {
-
         return $this->connection->query("SHOW TABLE STATUS");
     }
 
@@ -136,34 +150,30 @@ class MysqlProvider implements ProviderInterface
     /**
      * @param $table
      *
-     * @return mixed
+     * @return array
      *
      * @throws WriteException
      */
-    public function writeTableStructure($table)
+    public function tableStructure($table)
     {
-        list($isbackupdata, $createTableSql) = $this->tableStructure($table);
+        list($isBackupData, $createTableSQL) = $this->executeTableStructure($table);
         $sql = PHP_EOL;
         $sql .= "-- ----------------------------" . PHP_EOL;
         $sql .= "-- Table structure for $table" . PHP_EOL;
         $sql .= "-- ----------------------------" . PHP_EOL;
         $sql .= PHP_EOL;
-        $sql .= $createTableSql;
+        $sql .= $createTableSQL;
         $sql .= PHP_EOL;
-        if ($this->write->writeSQL($sql) == false) {
-            throw new WriteException($this->write->getFileName());
-        }
 
-        return $isbackupdata;
+        return [$sql, $isBackupData];
     }
 
     /**
-     * @param ConnectionInterface $connection
      * @param $table
      *
      * @return array
      */
-    protected function tableStructure($table)
+    protected function executeTableStructure($table)
     {
         $result = $this->connection->query("SHOW CREATE TABLE `{$table}`");
         $sql = trim($result[0]['Create Table'] ?? $result[0]['Create View']);
@@ -184,15 +194,16 @@ class MysqlProvider implements ProviderInterface
      *
      * @throws WriteException
      */
-    public function writeTableData($table, $limit, $page, $annotation = true)
+    public function tableData($table, $limit, $page, $annotation = true)
     {
         list($lastPage, $instertSQL) = $this->tableInstert(
             $table,
             $page,
             $limit
         );
+        // 表示没有数据可以进行备份
         if ($lastPage <= 0) {
-            return 0;
+            return ["", 0];
         }
         $sql = "";
         if ($annotation) {
@@ -205,13 +216,9 @@ class MysqlProvider implements ProviderInterface
         //INSERT INTO 开始事务的方式
         //$sql .= "BEGIN;";
         $sql .= $instertSQL;
+
         //$sql .= "COMMIT;";
-
-        if ($this->write->writeSQL($sql) == false) {
-            throw new WriteException($this->write->getFileName());
-        }
-
-        return $lastPage;
+        return [$sql, $lastPage];
     }
 
     protected function tableInstert($table, $page = 0, $limit = 100)
@@ -259,24 +266,6 @@ class MysqlProvider implements ProviderInterface
     }
 
     /**
-     * @return FileInfo[]
-     */
-    public function files()
-    {
-        $glob = new \FilesystemIterator(
-            $this->filename->getPath(),
-            \FilesystemIterator::KEY_AS_FILENAME
-        );
-        $list = [];
-        foreach ($glob as $file) {
-            /* var \SplFileInfo $file*/
-            $list[] = $this->filename->SplFileInfo($file);
-        }
-
-        return $list;
-    }
-
-    /**
      * @param string|array $sqls
      *
      * @return int
@@ -299,5 +288,4 @@ class MysqlProvider implements ProviderInterface
 
         return $this->connection->execute($sqls);
     }
-
 }

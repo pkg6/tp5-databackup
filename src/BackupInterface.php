@@ -14,19 +14,12 @@
 
 namespace tp5er\Backup;
 
-use tp5er\Backup\provider\ProviderInterface;
-use tp5er\Backup\write\WriteAbstract;
+use tp5er\Backup\reader\ReaderInterface;
+use tp5er\Backup\writer\WriterInterface;
 
 interface BackupInterface
 {
-
-    /**
-     * @param WriteAbstract $write
-     *
-     * @return $this
-     */
-    public function setWrite(WriteAbstract $write);
-
+    const version = "2.2";
     /**
      * 获取你当前使用的版本号.
      *
@@ -35,23 +28,51 @@ interface BackupInterface
     public function getVersion();
 
     /**
-     * @param ProviderInterface|null $provider
+     * 获取配置.
+     *
+     * @param $name
+     *
+     * @return array
+     */
+    public function config($name = null);
+
+    /**
+     * @param WriterInterface $writer
      *
      * @return $this
      */
-    public function setProvider(ProviderInterface $provider = null);
+    public function setWriter(WriterInterface $writer);
 
     /**
-     * @param $connection
-     * 为null的时候读取database.php默认的配置
-     * 为字符串时候，读取自定义链接信息
-     * 为ConnectionInterface时候就走用户自定义
      * @param $writeType
      *
-     * @return ProviderInterface
+     * @return WriterInterface
      */
-    public function getProviderObject($connection = null, $writeType = null);
+    public function getWriter($writeType = null);
 
+    /**
+     * @return string
+     */
+    public function getCurrentWriterType();
+
+    /**
+     * @param ReaderInterface|null $reader
+     *
+     * @return $this
+     */
+    public function setReader(ReaderInterface $reader = null);
+
+    /**
+     * @param $writeType
+     *
+     * @return ReaderInterface
+     */
+    public function getReader($writeType = null);
+
+    /**
+     * @return mixed
+     */
+    public function getCurrentReaderType();
     /**
      * 选中数据库.
      *
@@ -60,6 +81,26 @@ interface BackupInterface
      * @return mixed
      */
     public function database($connectionName = null);
+
+    /**
+     * 获取选中的数据库.
+     *
+     * @return string
+     */
+    public function getDatabase();
+    /**
+     * 获取选中数据库的配置.
+     *
+     * @return array
+     */
+    public function getDatabaseConfig();
+
+    /**
+     * 获取连接名称.
+     *
+     * @return string
+     */
+    public function getConnectionName();
 
     /**
      * 拉去所有的数据表.
@@ -118,6 +159,7 @@ interface BackupInterface
      * @return string
      */
     public function getCurrentBackupTable();
+
     /**
      * 备份所有表中结构和数据.
      *
@@ -135,7 +177,7 @@ interface BackupInterface
     /**
      * 备份文件列表.
      *
-     * @return FileInfo[]
+     * @return array
      */
     public function files();
 

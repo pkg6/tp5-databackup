@@ -4,11 +4,13 @@
 
 ## 重要的事情说三遍！！！重要的事情说三遍！！！重要的事情说三遍！！！
 
-> 1. 2.1版本以上，与以往(就一个类`Backup`可用，但是已标记废弃)有很大的差别，不过提供三种方式进行数据库备份还原优化修复操作
-> 2. [pkg6](https://github.com/pkg6)都是作者自己一个人在维护，欢迎提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 减少本人的精力
-> 3. 作者使用的php版本是php7.4，目测写的方法兼容8以上，如果不兼容，可以提交[pull request](https://github.com/pkg6/tp5-databackup/pulls)，记得写一下注释哦！！！
-> 4. 通过队列或命令行的方式，再也不用担心数据备份不完整
+> 1. [pkg6](https://github.com/pkg6)都是作者自己一个人在维护，欢迎提交[pull request](https://github.com/pkg6/think-backup/pulls) 减少本人的精力
+> 2. 作者使用的php版本是php7.4，目测写的方法兼容8以上，如果不兼容，可以提交[pull request](https://github.com/pkg6/think-backup/pulls)，记得写一下注释哦！！！
+> 3. 通过队列或命令行的方式，再也不用担心数据备份不完整
 
+## 版本区别
+
+> [https://github.com/pkg6/think-backup/issues/42](https://github.com/pkg6/think-backup/issues/42)
 
 ## 使用本类进行数据库备份
 
@@ -63,25 +65,21 @@ php think backup:list
 php think backup:cleanup
 ~~~
 
-## 目录说明
+## 基础概念
 
-- commands 命令脚本目录
-- controller 案例控制器，可以直接继承并重写
-- exception 在处理中出现的异常
-- provider 存放sql语句，目前支持mysql，主要是有其他需求需要备份其他数据库的操作，可以自行实现,都将在`BackupManager.php`具体实现
-- task 队列方式
-- validate 参数验证
-- write 写入的方式，目前是sql文件，其他写入需求可以，比如数据库迁移
-- BackupManager.php 所有的相关操作都在这里
-- FileInfo.php 文件读取之后基本信息
-- FileName.php 文件名由于是系统自动生成的所以需要一个类来进行维护并关联到FileInfo.php这个类的数据
-- OPT.php 定义操作常量
+reader：定义读取SQL的方法，目前只支持Mysql，自定义扩展可以实现  `tp5er\Backup\reader\ReaderInterface`
+
+writer：定义的写入SQL方法，目前只支持File，自定义扩展可以实现  `tp5er\Backup\writer\WriterInterface`
+
+Factory：定义reader和writer对象初始化
+
+BackupManager：所有的相关操作都在这里
 
 ## 提交代码规范
 
 1. fork一份代码到自己账号下,生成如 `test/tp5-databackup`
 2. 拉去一个分支 `develop` ，看个人习惯，无所谓
-3. 将develop提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 
+3. 将develop提交[pull request](https://github.com/pkg6/think-backup/pulls) 
 4. 等待作者合并
 5. 定期（当接受到第一个合并请求开始计算一周之内）会打tag，tag规范：2.1.x 作为新方法新类的出现，2.x.x作为对以往的方法和类进行变更甚至是破坏性的变更
 
@@ -103,7 +101,7 @@ rm -rf vendor/tp5er/tp5-databackup
 git clone -b develop git@github.com:pkg6/tp5-databackup.git vendor/tp5er/tp5-databackup
 ~~~
 
-> 进入vendor/tp5er/tp5-databackup进行修改代码，然后进行提交代码，提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 进行合并到main分支
+> 进入vendor/tp5er/tp5-databackup进行修改代码，然后进行提交代码，提交[pull request](https://github.com/pkg6/think-backup/pulls) 进行合并到main分支
 
 
 
