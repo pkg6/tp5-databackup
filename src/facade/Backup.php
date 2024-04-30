@@ -31,7 +31,7 @@ use tp5er\Backup\writer\file\FileInfo;
  * @method static string getCurrentBackupTable()
  * @method static string getCurrentBackupFile();
  * @method static void cleanup()
- * @method static FileInfo[] files()
+ * @method static [] files()
  * @method static bool import($fileName)
  */
 class Backup extends Facade

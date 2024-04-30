@@ -83,6 +83,14 @@ class ApiController
     }
 
     /**
+     * @return \tp5er\Backup\BackupInterface
+     */
+    protected function databaseBackup()
+    {
+        return Backup::database();
+    }
+
+    /**
      * 获取所有的数据表
      * /index/tables.
      *
@@ -90,7 +98,7 @@ class ApiController
      */
     public function tables()
     {
-        $list = Backup::tables();
+        $list = $this->databaseBackup()->tables();
         $ret = [];
         foreach ($list as $k => $item) {
             foreach ($item as $field => $value) {
@@ -113,7 +121,7 @@ class ApiController
      */
     public function files()
     {
-        $list = Backup::files();
+        $list = $this->databaseBackup()->files();
 
         return $this->success($list, '拉去本地文件成功');
     }
@@ -129,7 +137,7 @@ class ApiController
     {
         $file = request()->param('name');
         try {
-            $ret = Backup::import($file);
+            $ret =$this->databaseBackup()->import($file);
 
             return $this->success($ret, "数据还原成功");
         } catch (\Exception $exception) {
@@ -151,7 +159,7 @@ class ApiController
             return $this->error($validate->getError());
         }
         try {
-            if (Backup::backupStep1($data["tables"])) {
+            if ($this->databaseBackup()->backupStep1($data["tables"])) {
                 return $this->success([
                     'index' => 0,
                     'page' => 1,
@@ -181,7 +189,7 @@ class ApiController
             return $this->error($validate->getError());
         }
         $index = (int) $data["index"];
-        $lastPage = Backup::backupStep2($index, $data["page"]);
+        $lastPage = $this->databaseBackup()->backupStep2($index, $data["page"]);
 
         if ($lastPage == 0) {
             return $this->success([
@@ -198,7 +206,7 @@ class ApiController
             return $this->success([
                 'index' => $index,
                 'page' => $lastPage,
-                "table" => Backup::getCurrentBackupTable()
+                "table" => $this->backupManager()->getCurrentBackupTable()
             ], $msg);
         }
     }
@@ -213,7 +221,7 @@ class ApiController
      */
     public function cleanup()
     {
-        Backup::cleanup();
+        $this->databaseBackup()->cleanup();
 
         return $this->success([], '整库备份完毕！');
     }
@@ -230,7 +238,7 @@ class ApiController
         if (is_null($tables)) {
             return $this->error("没有获取到表");
         }
-        if (Backup::repair($tables)) {
+        if ($this->databaseBackup()->repair($tables)) {
             return $this->success($tables, "数据表修复完成！");
         } else {
             return $this->error("数据表修复出错请重试");
@@ -249,7 +257,7 @@ class ApiController
         if (is_null($tables)) {
             return $this->error("没有获取到表");
         }
-        if (Backup::optimize($tables)) {
+        if ($this->databaseBackup()->optimize($tables)) {
             return $this->success($tables, "数据表优化完成！");
         } else {
             return $this->error("数据表优化出错请重试！");

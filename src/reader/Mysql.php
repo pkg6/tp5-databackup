@@ -179,7 +179,6 @@ class Mysql implements ReaderInterface
         if ( ! empty($result[0]["Create View"])) {
             return [false, $sql];
         }
-
         return [true, $sql];
     }
 

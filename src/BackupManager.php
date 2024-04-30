@@ -109,6 +109,7 @@ class BackupManager implements BackupInterface
         $this->app = $app;
         $this->setVersion();
 
+        $this->database();
         //设置默认的
         $this->setWriter(new SQLFileWriter());
         $this->setReader(new Mysql());
@@ -302,9 +303,8 @@ class BackupManager implements BackupInterface
      *
      * @return Factory
      */
-    public function factory($name = null, $databaseName = null, $writeType = null, $readerType = null)
+    public function factory($name = null,  $writeType = null, $readerType = null)
     {
-        $this->database($databaseName);
         $write = $this->getWriter($writeType);
         $reader = $this->getReader($readerType);
 
@@ -477,6 +477,8 @@ class BackupManager implements BackupInterface
         } else {
             // 首先进行备份表结果，然后判断是否进行备份表数据
             list($sql, $isBackupData) = $factory->getReader()->tableStructure($this->getCurrentBackupTable());
+
+
             $factory->getWriter()->writeSQL($sql);
             if ($isBackupData) {
                 list($dataSQL, $lastPage) = $factory->getReader()->tableData(
