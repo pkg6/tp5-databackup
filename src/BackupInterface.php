@@ -14,8 +14,6 @@
 
 namespace tp5er\Backup;
 
-use tp5er\Backup\exception\BackupStepException;
-use tp5er\Backup\exception\LockException;
 use tp5er\Backup\reader\ReaderInterface;
 use tp5er\Backup\writer\WriterInterface;
 

@@ -18,6 +18,7 @@ use think\App;
 use think\helper\Arr;
 use tp5er\Backup\BackupInterface;
 use tp5er\Backup\exception\FileNotException;
+use tp5er\Backup\OPT;
 
 class SQLFileWriter implements WriterInterface
 {
@@ -94,13 +95,14 @@ class SQLFileWriter implements WriterInterface
         //2.2版本
         // database-databaseName-write_type-reader_type-version-time.sql
         $name = sprintf(
-            "%s-%s-%s-%s-%s-%s.sql",
+            "%s-%s-%s-%s-%s-%s.%s",
             $this->backup->getDatabase(),
             $this->backup->getConnectionName(),
             $this->backup->getCurrentWriterType(),
             $this->backup->getCurrentReaderType(),
             BackupInterface::version,
-            date("YmdHis")
+            date("YmdHis"),
+            OPT::SQLFileWriterExt
         );
 
         return $this->path() . DIRECTORY_SEPARATOR . $name;
@@ -190,10 +192,14 @@ class SQLFileWriter implements WriterInterface
         $glob = new \FilesystemIterator($this->path(), \FilesystemIterator::KEY_AS_FILENAME);
         /* @var \SplFileInfo $file */
         foreach ($glob as $file) {
-            if ($file->isFile()){
+            if ($file->isFile()) {
+                if ($file->getExtension() != OPT::SQLFileWriterExt) {
+                    continue;
+                }
                 $list[] = $this->SplFileInfo($file);
             }
         }
+
         return $list;
     }
 

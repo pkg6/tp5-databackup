@@ -16,7 +16,6 @@ namespace tp5er\Backup\facade;
 
 use think\Facade;
 use tp5er\Backup\BackupInterface;
-use tp5er\Backup\writer\file\FileInfo;
 
 /**
  * Class Backup.
