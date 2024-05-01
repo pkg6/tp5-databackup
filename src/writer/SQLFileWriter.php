@@ -75,17 +75,6 @@ class SQLFileWriter implements WriterInterface
     }
 
     /**
-     * @return array|\ArrayAccess|mixed
-     */
-    protected function path()
-    {
-        $path = Arr::get($this->config, "path", $this->app->getRootPath() . "backup");
-        mkdirs($path);
-
-        return $path;
-    }
-
-    /**
      * @return string
      */
     public function generateFileName()
@@ -105,7 +94,7 @@ class SQLFileWriter implements WriterInterface
             OPT::SQLFileWriterExt
         );
 
-        return $this->path() . DIRECTORY_SEPARATOR . $name;
+        return $this->path($name);
     }
 
     /**
@@ -189,7 +178,10 @@ class SQLFileWriter implements WriterInterface
     public function files()
     {
         $list = [];
-        $glob = new \FilesystemIterator($this->path(), \FilesystemIterator::KEY_AS_FILENAME);
+        $glob = new \FilesystemIterator(
+            $this->path(),
+            \FilesystemIterator::KEY_AS_FILENAME
+        );
         /* @var \SplFileInfo $file */
         foreach ($glob as $file) {
             if ($file->isFile()) {
@@ -225,6 +217,16 @@ class SQLFileWriter implements WriterInterface
         return false;
     }
 
+    public function filename($filename)
+    {
+        $info = pathinfo($filename);
+        if ($info["dirname"] === ".") {
+            return $this->path(pathinfo($filename, PATHINFO_BASENAME));
+        }
+
+        return $filename;
+    }
+
     /**
      * @param $file
      *
@@ -232,8 +234,7 @@ class SQLFileWriter implements WriterInterface
      */
     public function readSQL($file)
     {
-        $pathFileName = $this->path() . DIRECTORY_SEPARATOR . pathinfo($file, PATHINFO_BASENAME);
-
+        $pathFileName = $this->filename($file);
         if ( ! file_exists($pathFileName)) {
             throw new FileNotException($pathFileName);
         }
@@ -241,6 +242,24 @@ class SQLFileWriter implements WriterInterface
         $sqlArr = explode(PHP_EOL . PHP_EOL, $sql);
 
         return $sqlArr;
+    }
+
+    /**
+     * @return string
+     */
+    protected function path($fileName = null)
+    {
+        $path = Arr::get(
+            $this->config,
+            "path",
+            $this->app->getRootPath() . "backup"
+        );
+        mkdirs($path);
+        if (is_null($fileName)) {
+            return $path;
+        }
+
+        return $path . DIRECTORY_SEPARATOR . $fileName;
     }
 
 }

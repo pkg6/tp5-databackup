@@ -19,13 +19,15 @@ if ( ! function_exists('mkdirs')) {
      *
      * @param $path
      *
-     * @return void
+     * @return bool
      */
     function mkdirs($path)
     {
         if ( ! file_exists($path)) {
-            mkdir($path, 0755, true);
+            return mkdir($path, 0755, true);
         }
+
+        return true;
     }
 }
 
