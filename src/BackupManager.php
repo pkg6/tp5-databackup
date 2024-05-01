@@ -303,7 +303,7 @@ class BackupManager implements BackupInterface
      *
      * @return Factory
      */
-    public function factory($name = null,  $writeType = null, $readerType = null)
+    public function factory($name = null, $writeType = null, $readerType = null)
     {
         $write = $this->getWriter($writeType);
         $reader = $this->getReader($readerType);
@@ -477,7 +477,6 @@ class BackupManager implements BackupInterface
         } else {
             // 首先进行备份表结果，然后判断是否进行备份表数据
             list($sql, $isBackupData) = $factory->getReader()->tableStructure($this->getCurrentBackupTable());
-
 
             $factory->getWriter()->writeSQL($sql);
             if ($isBackupData) {

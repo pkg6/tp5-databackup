@@ -16,7 +16,7 @@ namespace tp5er\Backup\validate;
 
 use think\Validate;
 
-class ExportValidate extends Validate
+class WebValidate extends Validate
 {
     protected $rule = [
         'tables' => 'require',

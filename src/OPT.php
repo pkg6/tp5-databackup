@@ -25,6 +25,8 @@ final class OPT
     //优化表
     const optimize = "optimize";
 
+    const SQLFileWriterExt = "sql";
+
     const backupPageTableDoesNotExist = -1;
     const backupPageTableOver = 0;
 

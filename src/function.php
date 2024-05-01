@@ -61,7 +61,7 @@ if ( ! function_exists('backup_queue')) {
      *
      * @return void
      *
-     * @see \tp5er\Backup\validate\BackupValidate
+     * @see \tp5er\Backup\validate\QueueValidate
      */
     function backup_queue($data = [], $delay = 0, $queue = null)
     {
@@ -82,7 +82,7 @@ if ( ! function_exists('backup_validate')) {
 
     function backup_validate($data = [])
     {
-        $validate = new \tp5er\Backup\validate\BackupValidate();
+        $validate = new \tp5er\Backup\validate\QueueValidate();
         if ( ! $validate->scene($data["opt"])->check($data)) {
             throw new \think\exception\ValidateException($validate->getError());
         }

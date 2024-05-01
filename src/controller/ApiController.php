@@ -19,7 +19,7 @@ use think\helper\Str;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\facade\Backup;
 use tp5er\Backup\OPT;
-use tp5er\Backup\validate\ExportValidate;
+use tp5er\Backup\validate\WebValidate;
 
 /**
  * 作者是将此控制器继承在Index.php中,所以路由/index/*
@@ -137,7 +137,7 @@ class ApiController
     {
         $file = request()->param('name');
         try {
-            $ret =$this->databaseBackup()->import($file);
+            $ret = $this->databaseBackup()->import($file);
 
             return $this->success($ret, "数据还原成功");
         } catch (\Exception $exception) {
@@ -153,7 +153,7 @@ class ApiController
      */
     public function backupStep1()
     {
-        $validate = new ExportValidate();
+        $validate = new WebValidate();
         $data = request()->post();
         if ( ! $validate->scene("step1")->check($data)) {
             return $this->error($validate->getError());
@@ -183,7 +183,7 @@ class ApiController
      */
     public function backupStep2()
     {
-        $validate = new ExportValidate();
+        $validate = new WebValidate();
         $data = request()->get();
         if ( ! $validate->scene("step2")->check($data)) {
             return $this->error($validate->getError());
