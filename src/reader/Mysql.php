@@ -90,7 +90,7 @@ class Mysql implements ReaderInterface
         $hostport = Arr::get($config, "hostport");
         $sql = "-- -----------------------------" . PHP_EOL;
         $sql .= "-- tp5-databackup SQL Dump " . PHP_EOL;
-        $sql .= "-- version " . $backup->getVersion() . PHP_EOL;
+        $sql .= "-- version " . databackup_version() . PHP_EOL;
         $sql .= "-- https://github.com/pkg6/tp5-databackup " . PHP_EOL;
         $sql .= "-- " . PHP_EOL;
         $sql .= "-- Host     : " . $hostname . PHP_EOL;
