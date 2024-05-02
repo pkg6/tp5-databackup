@@ -111,6 +111,19 @@ if ( ! function_exists('mkdirs')) {
         return true;
     }
 }
+if ( ! function_exists('databackup_version')) {
+    /**
+     * 当前安装tp5er/tp5-databackup版本号.
+     *
+     * @return string
+     */
+    function databackup_version()
+    {
+        $composer = json_decode(file_get_contents(app()->getRootPath() . "composer.json"), true);
+
+        return \think\helper\Arr::get($composer, "require.tp5er/tp5-databackup");
+    }
+}
 
 if ( ! function_exists('format_bytes')) {
     /**

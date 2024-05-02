@@ -89,6 +89,59 @@ php think backup:list
 php think backup:cleanup
 ~~~
 
+## 事件`参考代码`
+
+~~~
+<?php
+
+namespace tp5er\Backup;
+
+use think\facade\Event as tpEvent;
+
+
+class Event
+{
+    //在备份第一步使用事件
+    const backupStep1 = "tp5er.backup.step1";
+    //在备份第二步使用初始事件
+    const backupStep2 = "tp5er.backup.step2";
+    //在备份第二步备份数据使用的事件
+    const backupStep2Data = "tp5er.backup.step2.data";
+    
+    /**
+     * @return void
+     */
+    public static function event()
+    {
+        tpEvent::listen(Event::backupStep1, function ($data) {
+            /**
+             * @var BackupInterface $backup
+             */
+            list($backup, $filename, $table, $ret) = $data;
+
+            //在备份第一步执行
+            //Your TODO
+        });
+        tpEvent::listen(Event::backupStep2, function ($data) {
+            /**
+             * @var BackupInterface $backup
+             */
+            list($backup, $filename, $table) = $data;
+            //Your TODO
+
+        });
+        tpEvent::listen(Event::backupStep2Data, function ($data) {
+            /**
+             * @var BackupInterface $backup
+             */
+            list($backup, $filename, $sql, $lastPageOrIsBackupData) = $data;
+            //Your TODO
+        });
+    }
+
+}
+~~~
+
 ## 基础概念
 
 reader：定义读取SQL的方法，目前只支持Mysql，自定义扩展可以实现  `tp5er\Backup\reader\ReaderInterface`

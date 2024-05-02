@@ -19,9 +19,17 @@ use tp5er\Backup\writer\WriterInterface;
 
 interface BackupInterface
 {
-    const version = "2.2";
+
     /**
-     * 获取你当前使用的版本号.
+     * 生成sql版本号.
+     */
+    const version = "2";
+
+    /**
+     * 获取你使用备份使用的版本号.
+     * 生成的sql语句发生变化需要修改此处.
+     *
+     * @see BackupInterface 中version版本
      *
      * @return string
      */
@@ -160,6 +168,13 @@ interface BackupInterface
      * @return string
      */
     public function getCurrentBackupFile();
+
+    /**
+     * 当前备份需要备份的表列表.
+     *
+     * @return array
+     */
+    public function getCurrentBackupTables();
 
     /**
      * 当前备份正在备份的表.

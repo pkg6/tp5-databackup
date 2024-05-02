@@ -33,6 +33,9 @@ class BackupManager implements BackupInterface
      */
     protected $app;
 
+    /**
+     * @var array
+     */
     protected $config = [
         "default" => "file",
         "backups" => [
@@ -49,9 +52,9 @@ class BackupManager implements BackupInterface
         "limit" => 100,
     ];
     /**
-     * @var array|\ArrayAccess|mixed
+     * @var string
      */
-    protected $version;
+    protected $version = BackupInterface::version;
     /**
      * @var array
      */
@@ -107,8 +110,6 @@ class BackupManager implements BackupInterface
     public function __construct(App $app)
     {
         $this->app = $app;
-        $this->setVersion();
-
         $this->database();
         //设置默认的
         $this->setWriter(new SQLFileWriter());
@@ -117,16 +118,7 @@ class BackupManager implements BackupInterface
     }
 
     /**
-     * @return void
-     */
-    protected function setVersion()
-    {
-        $composer = json_decode(file_get_contents($this->app->getRootPath() . "composer.json"), true);
-        $this->version = Arr::get($composer, "require.tp5er/tp5-databackup");
-    }
-
-    /**
-     * @return array|\ArrayAccess|mixed|string
+     * @return int
      */
     public function getVersion()
     {
@@ -297,9 +289,9 @@ class BackupManager implements BackupInterface
     }
 
     /**
-     * @param $databaseName
-     * @param $writeType
-     * @param $readerType
+     * @param null $name
+     * @param null $writeType
+     * @param null $readerType
      *
      * @return Factory
      */
@@ -366,15 +358,12 @@ class BackupManager implements BackupInterface
         Cache::set($this->app, Cache::File, $filename);
         Cache::set($this->app, Cache::Tables, $tables);
 
-        return $writer->writeSQL($factory->getReader()->copyright($this));
-    }
+        //触发步骤1事件
+        $this->app->event->trigger(Event::backupStep1, [
+            $this, $filename, $tables,""
+        ]);
 
-    /**
-     * @return string|void
-     */
-    public function getCurrentBackupFile()
-    {
-        return $this->app->cache->get(Cache::File);
+        return $writer->writeSQL($factory->getReader()->copyright($this));
     }
 
     /**
@@ -426,6 +415,10 @@ class BackupManager implements BackupInterface
         if ( ! $writer->writeSQL($factory->getReader()->copyright($this))) {
             throw new BackupStepException(1, "File write failure");
         }
+        //触发事件
+        $this->app->event->trigger(Event::backupStep1, [
+            $this, $filename, $tables, $ret,
+        ]);
 
         return $ret;
     }
@@ -458,6 +451,11 @@ class BackupManager implements BackupInterface
 
         $cahceKey = Cache::Table . $filename . "-" . $this->getCurrentBackupTable();
 
+        //触发步骤二事件
+        $this->app->event->trigger(Event::backupStep2, [
+            $this, $filename, $this->currentBackupTable,
+        ]);
+
         if ($this->app->cache->has($cahceKey)) {
             list($dataSQL, $lastPage) = $factory->getReader()
                 ->tableData(
@@ -473,12 +471,23 @@ class BackupManager implements BackupInterface
                 $this->app->cache->delete($cahceKey);
             }
 
+            //触发事件
+            $this->app->event->trigger(Event::backupStep2Data, [
+                $this, $filename, $this->currentBackupTable,$dataSQL,$lastPage,
+            ]);
+
             return $lastPage;
         } else {
             // 首先进行备份表结果，然后判断是否进行备份表数据
             list($sql, $isBackupData) = $factory->getReader()->tableStructure($this->getCurrentBackupTable());
 
             $factory->getWriter()->writeSQL($sql);
+
+            //触发事件
+            $this->app->event->trigger(Event::backupStep2Data, [
+                $this, $filename, $this->currentBackupTable,$sql,$isBackupData,
+            ]);
+
             if ($isBackupData) {
                 list($dataSQL, $lastPage) = $factory->getReader()->tableData(
                     $this->getCurrentBackupTable(),
@@ -500,12 +509,39 @@ class BackupManager implements BackupInterface
 
     }
 
+    /**
+     * 根据配置拉去当前配置拉去的数量.
+     *
+     * @return array|\ArrayAccess|mixed
+     */
     protected function getLimit()
     {
         return Arr::get($this->config, "limit", 100);
     }
 
     /**
+     * 当前备份所使用的文件名称.
+     *
+     * @return string
+     */
+    public function getCurrentBackupFile()
+    {
+        return $this->app->cache->get(Cache::File);
+    }
+
+    /**
+     * 当前备份需要备份的表列表.
+     *
+     * @return array
+     */
+    public function getCurrentBackupTables()
+    {
+        return $this->app->cache->get(Cache::Tables);
+    }
+
+    /**
+     * 当前正在执行备份选中的表.
+     *
      * @return string
      */
     public function getCurrentBackupTable()
@@ -514,9 +550,13 @@ class BackupManager implements BackupInterface
     }
 
     /**
+     * 执行备份（用于command 或队列）.
+     *
      * @param $tables
      *
-     * @return mixed|void
+     * @return array
+     *
+     * @throws LockException|BackupStepException
      */
     public function backup($tables)
     {
@@ -543,6 +583,8 @@ class BackupManager implements BackupInterface
      * @param $page
      *
      * @return int
+     *
+     * @throws BackupStepException
      */
     protected function backupAllData($index = 0, $page = 1)
     {

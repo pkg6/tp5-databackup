@@ -89,7 +89,7 @@ class SQLFileWriter implements WriterInterface
             $this->backup->getConnectionName(),
             $this->backup->getCurrentWriterType(),
             $this->backup->getCurrentReaderType(),
-            BackupInterface::version,
+            $this->backup->getVersion(),
             date("YmdHis"),
             OPT::SQLFileWriterExt
         );
