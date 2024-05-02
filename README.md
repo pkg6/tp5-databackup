@@ -16,13 +16,41 @@
 composer require tp5er/tp5-databackup
 ~~~
 
-### 使用方式1: 继承 `tp5er\Backup\controller\ApiController`
+### 使用方式1: 继承 `tp5er\Backup\controller\BackupController`
 
 > 重要的事情说三遍！！！重要的事情说三遍！！！重要的事情说三遍！！！
 >
-> 在thinkphp框架中定义一个控制器，然后继承`tp5er\Backup\controller\ApiController`，然后跳转到`ApiController`控制器中查看方法，都是中国人看的懂中国话。
+> 在thinkphp框架中定义一个控制器，然后继承`tp5er\Backup\controller\BackupController`，然后跳转到`BackupController`控制器中查看方法，都是中国人看的懂中国话。
 
-### 使用方式2: 通过队列的方法
+### 使用方式2: 使用路由`route/app.php`
+
+> 通过路由使用案例： \tp5er\Backup\Route::route();
+>
+> 由于页面使用layui渲染的前端页面，你可以参考前端页面自己量身定做，然后使用\tp5er\Backup\Route::api();调用接口也是可以的哦
+
+~~~
+<?php
+// +----------------------------------------------------------------------
+// | ThinkPHP [ WE CAN DO IT JUST THINK ]
+// +----------------------------------------------------------------------
+// | Copyright (c) 2006~2018 http://thinkphp.cn All rights reserved.
+// +----------------------------------------------------------------------
+// | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
+// +----------------------------------------------------------------------
+// | Author: liu21st <liu21st@gmail.com>
+// +----------------------------------------------------------------------
+use think\facade\Route;
+
+Route::get('think', function () {
+    return 'hello,ThinkPHP6!';
+});
+
+Route::get('hello/:name', 'index/hello');
+
+\tp5er\Backup\Route::route();
+~~~
+
+### 使用方式3: 通过队列的方法
 
 #### 还原数据
 
@@ -42,7 +70,7 @@ $data["table"]=["fa_category","fa_auth_rule"];
 backup_queue($data);
 ~~~
 
-### 使用方式3: 通过命令行
+### 使用方式4: 通过命令行
 
 ~~~
 //进入交互模式进行相关操作
