@@ -74,14 +74,14 @@ class BackupManager implements BackupInterface
      * @var string[]
      */
     public $writers = [
-//        "sql" => SQLFileWriter::class,
+//        "sql" => new SQLFileWriter::class,
     ];
 
     /**
      * @var array
      */
     protected $readers = [
-//        "mysql" =>  Mysql::class,
+//        "mysql" => new Mysql::class,
 //        "mongo"  => "",
 //        "oracle" => "",
 //        "pgsql"  => "",

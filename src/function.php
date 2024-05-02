@@ -180,7 +180,6 @@ if ( ! function_exists('backup_run')) {
      *
      * @return array|int
      *
-     * @throws \tp5er\Backup\exception\ClassDefineException
      * @throws \tp5er\Backup\exception\LockException
      *
      * @see backup_validate
