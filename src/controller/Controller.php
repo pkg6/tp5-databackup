@@ -28,9 +28,9 @@ use tp5er\Backup\validate\WebValidate;
  * /index/import 使用layui 实现还原的流程
  * Class ApiController.
  */
-class ApiController
+abstract class Controller
 {
-    use Response;
+    abstract protected function apiPrefix();
 
     /**
      * 路由.
@@ -39,16 +39,18 @@ class ApiController
      */
     protected function apiRoute()
     {
+        $prefix = $this->apiPrefix();
+
         return [
-            "tables" => "/index/tables",
-            "optimize" => "/index/optimize",
-            "repair" => "/index/repair",
-            "backupStep1" => "/index/backupStep1",
-            "backupStep2" => "/index/backupStep2",
-            "cleanup" => "/index/cleanup",
-            "files" => "/index/files",
-            "import" => "/index/doImport",
-            "download" => "/index/download",
+            "tables" => $prefix . "/tables",
+            "optimize" => $prefix . "/optimize",
+            "repair" => $prefix . "/repair",
+            "backupStep1" => $prefix . "/backupStep1",
+            "backupStep2" => $prefix . "/backupStep2",
+            "cleanup" => $prefix . "/cleanup",
+            "files" => $prefix . "/files",
+            "import" => $prefix . "/doImport",
+            "download" => $prefix . "/download",
         ];
     }
 
@@ -110,7 +112,7 @@ class ApiController
             }
         }
 
-        return $this->success($ret);
+        return backup_success($ret);
     }
 
     /**
@@ -123,7 +125,7 @@ class ApiController
     {
         $list = $this->databaseBackup()->files();
 
-        return $this->success($list, '拉去本地文件成功');
+        return backup_success($list, '拉去本地文件成功');
     }
 
     /**
@@ -139,9 +141,9 @@ class ApiController
         try {
             $ret = $this->databaseBackup()->import($file);
 
-            return $this->success($ret, "数据还原成功");
+            return backup_success($ret, "数据还原成功");
         } catch (\Exception $exception) {
-            return $this->error($exception->getMessage());
+            return backup_error($exception->getMessage());
         }
     }
 
@@ -156,22 +158,22 @@ class ApiController
         $validate = new WebValidate();
         $data = request()->post();
         if ( ! $validate->scene("step1")->check($data)) {
-            return $this->error($validate->getError());
+            return backup_error($validate->getError());
         }
         try {
             if ($this->databaseBackup()->backupStep1($data["tables"])) {
-                return $this->success([
+                return backup_success([
                     'index' => 0,
                     'page' => 1,
                     "tables" => $data["tables"],
                 ], '初始化成功！');
             } else {
-                return $this->error('初始化失败！');
+                return backup_error('初始化失败！');
             }
         } catch (LockException $exception) {
-            return $this->error('检测到有一个备份任务正在执行，请稍后再试！');
+            return backup_error('检测到有一个备份任务正在执行，请稍后再试！');
         } catch (\Exception $exception) {
-            return $this->error($exception->getMessage());
+            return backup_error($exception->getMessage());
         }
     }
 
@@ -186,13 +188,13 @@ class ApiController
         $validate = new WebValidate();
         $data = request()->get();
         if ( ! $validate->scene("step2")->check($data)) {
-            return $this->error($validate->getError());
+            return backup_error($validate->getError());
         }
         $index = (int) $data["index"];
         $lastPage = $this->databaseBackup()->backupStep2($index, $data["page"]);
 
         if ($lastPage == 0) {
-            return $this->success([
+            return backup_success([
                 'index' => $index + 1,
                 'page' => 0,
                 "table" => Backup::getCurrentBackupTable(),
@@ -203,7 +205,7 @@ class ApiController
                 $msg = OPT::backupPage($lastPage);
             }
 
-            return $this->success([
+            return backup_success([
                 'index' => $index,
                 'page' => $lastPage,
                 "table" => $this->databaseBackup()->getCurrentBackupTable()
@@ -223,7 +225,7 @@ class ApiController
     {
         $this->databaseBackup()->cleanup();
 
-        return $this->success([], '整库备份完毕！');
+        return backup_success([], '整库备份完毕！');
     }
 
     /**
@@ -236,12 +238,12 @@ class ApiController
     {
         $tables = request()->post("tables");
         if (is_null($tables)) {
-            return $this->error("没有获取到表");
+            return backup_error("没有获取到表");
         }
         if ($this->databaseBackup()->repair($tables)) {
-            return $this->success($tables, "数据表修复完成！");
+            return backup_success($tables, "数据表修复完成！");
         } else {
-            return $this->error("数据表修复出错请重试");
+            return backup_error("数据表修复出错请重试");
         }
     }
 
@@ -255,12 +257,12 @@ class ApiController
     {
         $tables = request()->post("tables");
         if (is_null($tables)) {
-            return $this->error("没有获取到表");
+            return backup_error("没有获取到表");
         }
         if ($this->databaseBackup()->optimize($tables)) {
-            return $this->success($tables, "数据表优化完成！");
+            return backup_success($tables, "数据表优化完成！");
         } else {
-            return $this->error("数据表优化出错请重试！");
+            return backup_error("数据表优化出错请重试！");
         }
     }
 
@@ -275,10 +277,19 @@ class ApiController
     {
         $filename = request()->param('filename');
 
-        return \think\Response::create($filename, 'file')
-            ->name(pathinfo($filename, PATHINFO_BASENAME))
-            ->isContent(false)
-            ->expire(180);
+        return backup_download($filename);
     }
 
+    /**
+     * 删除备份文件.
+     *
+     * @return \think\Response
+     */
+    public function delete()
+    {
+        $filename = request()->param('filename');
+        unlink($filename);
+
+        return backup_success("", "删除成功");
+    }
 }
