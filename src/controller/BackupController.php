@@ -14,6 +14,12 @@
 
 namespace tp5er\Backup\controller;
 
+/**
+ * Class BackupController
+ * composer require topthink/think-view
+ * /index/backup 使用layui 实现备份的流程
+ * /index/import 使用layui 实现还原的流程.
+ */
 class BackupController extends Controller
 {
     protected function apiPrefix()

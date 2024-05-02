@@ -20,7 +20,7 @@ class Route
 {
 
     const prefix = "/tp5er/backup";
-    const apiPrefix = Route::prefix."/api";
+    const apiPrefix = Route::prefix . "/api";
 
     public static function route()
     {
@@ -47,6 +47,7 @@ class Route
             tpRoute::get("/files", "\\tp5er\Backup\controller\RouteController@files");
             tpRoute::get("/doImport", "\\tp5er\Backup\controller\RouteController@doImport");
             tpRoute::post("/backupStep1", "\\tp5er\Backup\controller\RouteController@backupStep1");
+            tpRoute::post("/tableCounts", "\\tp5er\Backup\controller\RouteController@tableCounts");
             tpRoute::get("/backupStep2", "\\tp5er\Backup\controller\RouteController@backupStep2");
             tpRoute::get("/cleanup", "\\tp5er\Backup\controller\RouteController@cleanup");
             tpRoute::post("/repair", "\\tp5er\Backup\controller\RouteController@repair");

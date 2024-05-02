@@ -23,9 +23,6 @@ use tp5er\Backup\validate\WebValidate;
 
 /**
  * 作者是将此控制器继承在Index.php中,所以路由/index/*
- *  composer require topthink/think-view
- * /index/backup 使用layui 实现备份的流程
- * /index/import 使用layui 实现还原的流程
  * Class ApiController.
  */
 abstract class Controller
@@ -51,6 +48,7 @@ abstract class Controller
             "files" => $prefix . "/files",
             "import" => $prefix . "/doImport",
             "download" => $prefix . "/download",
+            "delete" => $prefix . "/delete",
         ];
     }
 
@@ -116,8 +114,7 @@ abstract class Controller
     }
 
     /**
-     * 获取所有备份文件
-     * /index/filelist.
+     * 获取所有备份文件.
      *
      * @return \think\Response
      */
@@ -130,7 +127,6 @@ abstract class Controller
 
     /**
      * 导入
-     * /index/import?name=fastadmin-mysql-20240416184903.sql.
      * 文件过大会导致出现接口超时，读取失败等问题,推荐使用队列进行导入/命令行进行导入.
      *
      * @return \think\Response
@@ -149,7 +145,7 @@ abstract class Controller
 
     /**
      * 备份第一步
-     * 提交备份任务：/index/backupStep1发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`.
+     * 提交备份任务：/backupStep1发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`.
      *
      * @return \think\Response
      */
@@ -178,8 +174,38 @@ abstract class Controller
     }
 
     /**
+     * 可作为备份第一步，用于前端进度统计.
+     *
+     * @return \think\Response
+     */
+    public function tableCounts()
+    {
+        $validate = new WebValidate();
+        $data = request()->post();
+        if ( ! $validate->scene("step1")->check($data)) {
+            return backup_error($validate->getError());
+        }
+        try {
+            $ret = $this->databaseBackup()->tableCounts($data["tables"]);
+            if ($ret) {
+                return backup_success([
+                    'index' => 0,
+                    'page' => 1,
+                    "tables" => $ret,
+                ], '初始化成功！');
+            } else {
+                return backup_error('初始化失败！');
+            }
+        } catch (LockException $exception) {
+            return backup_error('检测到有一个备份任务正在执行，请稍后再试！');
+        } catch (\Exception $exception) {
+            return backup_error($exception->getMessage());
+        }
+    }
+
+    /**
      * 备份第二步
-     * 发送备份数据请求：/index/export发送get请求/index/backupStep2?index=0&page=0,直到page=0表示该数据备份完成.
+     * 发送备份数据请求：/export发送get请求/backupStep2?index=0&page=0,直到page=0表示该数据备份完成.
      *
      * @return \think\Response
      */
@@ -215,7 +241,7 @@ abstract class Controller
 
     /**
      * 整个库备份完之后清理缓存
-     * /index/cleanup.
+     * /cleanup.
      *
      * @return \think\Response
      *
@@ -230,7 +256,7 @@ abstract class Controller
 
     /**
      * 修复表
-     * /index/repair.
+     * /repair.
      *
      * @return \think\Response
      */
@@ -249,7 +275,7 @@ abstract class Controller
 
     /**
      * 优化表
-     * /index/optimize.
+     * /optimize.
      *
      * @return \think\Response
      */
@@ -269,7 +295,7 @@ abstract class Controller
     /**
      * 备份文件下载.
      *
-     * /index/download?file=fastadmin-mysql-20240416184903.sql.
+     * /download?file=fastadmin-mysql-20240416184903.sql.
      *
      * @return mixed
      */
