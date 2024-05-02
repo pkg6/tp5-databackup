@@ -1,11 +1,17 @@
 
 ## 2.2以上版本
 
-1.  Backup.php文件正式删除
-
+1. Backup.php文件正式删除
 2. 基于2.1版本`BackupInterface` 进行重构底层
 3. 移除 `build`，`provider`，`FileInfo`，`FileName`类
 4. 添加`Writer`，`reader`类
+5. 将 `tp5er\Backup\controller\ApiController` 更改为 `tp5er\Backup\controller\BackupController`
+6. 定义接口`\tp5er\Backup\Route::api()`加入到`route/app.php`，用户可以自定义前端，直接调用接口即可
+7. 添加删除备份文件接口
+8. 移除response添加自定义函数`backup_success`和 `backup_error`
+9. `src/validate `目录下文件名修改
+
+
 
 ## 2.1以上版本
 
