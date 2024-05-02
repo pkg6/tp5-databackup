@@ -19,7 +19,7 @@ use tp5er\Backup\OPT;
 
 /**
  */
-class BackupValidate extends Validate
+class QueueValidate extends Validate
 {
     protected $rule = [
         'opt' => "require|in:" . OPT::import . "," . OPT::backup,

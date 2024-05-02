@@ -25,14 +25,24 @@ final class OPT
     //优化表
     const optimize = "optimize";
 
+    const SQLFileWriterExt = "sql";
+
     const backupPageTableDoesNotExist = -1;
     const backupPageTableOver = 0;
 
+    /**
+     * 支持的数据表操作.
+     *
+     * @return string[]
+     */
     public static function opts()
     {
         return [OPT::import, OPT::backup, OPT::repair, OPT::optimize];
     }
 
+    /*
+     *  在备份中page的含义
+     */
     public static function backupPage($page)
     {
         switch ($page) {

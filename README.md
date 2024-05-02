@@ -4,11 +4,9 @@
 
 ## 重要的事情说三遍！！！重要的事情说三遍！！！重要的事情说三遍！！！
 
-> 1. 2.1版本以上，与以往(就一个类`Backup`可用，但是已标记废弃)有很大的差别，不过提供三种方式进行数据库备份还原优化修复操作
-> 2. [pkg6](https://github.com/pkg6)都是作者自己一个人在维护，欢迎提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 减少本人的精力
-> 3. 作者使用的php版本是php7.4，目测写的方法兼容8以上，如果不兼容，可以提交[pull request](https://github.com/pkg6/tp5-databackup/pulls)，记得写一下注释哦！！！
-> 4. 通过队列或命令行的方式，再也不用担心数据备份不完整
-
+> 1. [pkg6](https://github.com/pkg6)都是作者自己一个人在维护，欢迎提交[pull request](https://github.com/pkg6/think-backup/pulls) 减少本人的精力
+> 2. 作者使用的php版本是php7.4，目测写的方法兼容8以上，如果不兼容，可以提交[pull request](https://github.com/pkg6/think-backup/pulls)，记得写一下注释哦！！！
+> 3. 通过队列或命令行的方式，再也不用担心数据备份不完整
 
 ## 使用本类进行数据库备份
 
@@ -18,13 +16,41 @@
 composer require tp5er/tp5-databackup
 ~~~
 
-### 使用方式1: 继承 `tp5er\Backup\controller\ApiController`
+### 使用方式1: 继承 `tp5er\Backup\controller\BackupController`
 
 > 重要的事情说三遍！！！重要的事情说三遍！！！重要的事情说三遍！！！
 >
-> 在thinkphp框架中定义一个控制器，然后继承`tp5er\Backup\controller\ApiController`，然后跳转到`ApiController`控制器中查看方法，都是中国人看的懂中国话。
+> 在thinkphp框架中定义一个控制器，然后继承`tp5er\Backup\controller\BackupController`，然后跳转到`BackupController`控制器中查看方法，都是中国人看的懂中国话。
 
-### 使用方式2: 通过队列的方法
+### 使用方式2: 使用路由`route/app.php`
+
+> 通过路由使用案例： \tp5er\Backup\Route::route();
+>
+> 由于页面使用layui渲染的前端页面，你可以参考前端页面自己量身定做，然后使用\tp5er\Backup\Route::api();调用接口也是可以的哦
+
+~~~
+<?php
+// +----------------------------------------------------------------------
+// | ThinkPHP [ WE CAN DO IT JUST THINK ]
+// +----------------------------------------------------------------------
+// | Copyright (c) 2006~2018 http://thinkphp.cn All rights reserved.
+// +----------------------------------------------------------------------
+// | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
+// +----------------------------------------------------------------------
+// | Author: liu21st <liu21st@gmail.com>
+// +----------------------------------------------------------------------
+use think\facade\Route;
+
+Route::get('think', function () {
+    return 'hello,ThinkPHP6!';
+});
+
+Route::get('hello/:name', 'index/hello');
+
+\tp5er\Backup\Route::route();
+~~~
+
+### 使用方式3: 通过队列的方法
 
 #### 还原数据
 
@@ -44,7 +70,7 @@ $data["table"]=["fa_category","fa_auth_rule"];
 backup_queue($data);
 ~~~
 
-### 使用方式3: 通过命令行
+### 使用方式4: 通过命令行
 
 ~~~
 //进入交互模式进行相关操作
@@ -63,26 +89,25 @@ php think backup:list
 php think backup:cleanup
 ~~~
 
-## 目录说明
+## 基础概念
 
-- build 存放sql语句，目前支持mysql，主要是有其他需求需要备份其他数据库的操作，可以自行实现
-- commands 命令脚本目录
-- controller 案例控制器，可以直接继承并重写
-- exception 在处理中出现的异常
-- provider中的是基础方法，都将在`BackupManager.php`具体实现
-- task 队列方式
-- validate 参数验证
-- write 写入的方式，目前是sql文件，其他写入需求可以，比如数据库迁移
-- BackupManager.php 所有的相关操作都在这里
-- FileInfo.php 文件读取之后基本信息
-- FileName.php 文件名由于是系统自动生成的所以需要一个类来进行维护并关联到FileInfo.php这个类的数据
-- OPT.php 定义操作常量
+reader：定义读取SQL的方法，目前只支持Mysql，自定义扩展可以实现  `tp5er\Backup\reader\ReaderInterface`
+
+writer：定义的写入SQL方法，目前只支持File，自定义扩展可以实现  `tp5er\Backup\writer\WriterInterface`
+
+Factory：定义reader和writer对象初始化
+
+BackupManager：所有的相关操作都在这里
+
+## 版本修改记录
+
+[CHANGELOG.md](https://github.com/pkg6/think-backup/blob/main/CHANGELOG.md)
 
 ## 提交代码规范
 
 1. fork一份代码到自己账号下,生成如 `test/tp5-databackup`
 2. 拉去一个分支 `develop` ，看个人习惯，无所谓
-3. 将develop提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 
+3. 将develop提交[pull request](https://github.com/pkg6/think-backup/pulls) 
 4. 等待作者合并
 5. 定期（当接受到第一个合并请求开始计算一周之内）会打tag，tag规范：2.1.x 作为新方法新类的出现，2.x.x作为对以往的方法和类进行变更甚至是破坏性的变更
 
@@ -104,9 +129,7 @@ rm -rf vendor/tp5er/tp5-databackup
 git clone -b develop git@github.com:pkg6/tp5-databackup.git vendor/tp5er/tp5-databackup
 ~~~
 
-> 进入vendor/tp5er/tp5-databackup进行修改代码，然后进行提交代码，提交[pull request](https://github.com/pkg6/tp5-databackup/pulls) 进行合并到main分支
-
-
+> 进入vendor/tp5er/tp5-databackup进行修改代码，然后进行提交代码，提交[pull request](https://github.com/pkg6/think-backup/pulls) 进行合并到main分支
 
 ## 其他手段进行数据备份还原
 

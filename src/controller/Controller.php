@@ -19,18 +19,15 @@ use think\helper\Str;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\facade\Backup;
 use tp5er\Backup\OPT;
-use tp5er\Backup\validate\ExportValidate;
+use tp5er\Backup\validate\WebValidate;
 
 /**
  * 作者是将此控制器继承在Index.php中,所以路由/index/*
- *  composer require topthink/think-view
- * /index/backup 使用layui 实现备份的流程
- * /index/import 使用layui 实现还原的流程
  * Class ApiController.
  */
-class ApiController
+abstract class Controller
 {
-    use Response;
+    abstract protected function apiPrefix();
 
     /**
      * 路由.
@@ -39,16 +36,19 @@ class ApiController
      */
     protected function apiRoute()
     {
+        $prefix = $this->apiPrefix();
+
         return [
-            "tables" => "/index/tables",
-            "optimize" => "/index/optimize",
-            "repair" => "/index/repair",
-            "backupStep1" => "/index/backupStep1",
-            "backupStep2" => "/index/backupStep2",
-            "cleanup" => "/index/cleanup",
-            "files" => "/index/files",
-            "import" => "/index/doImport",
-            "download" => "/index/download",
+            "tables" => $prefix . "/tables",
+            "optimize" => $prefix . "/optimize",
+            "repair" => $prefix . "/repair",
+            "backupStep1" => $prefix . "/backupStep1",
+            "backupStep2" => $prefix . "/backupStep2",
+            "cleanup" => $prefix . "/cleanup",
+            "files" => $prefix . "/files",
+            "import" => $prefix . "/doImport",
+            "download" => $prefix . "/download",
+            "delete" => $prefix . "/delete",
         ];
     }
 
@@ -83,6 +83,14 @@ class ApiController
     }
 
     /**
+     * @return \tp5er\Backup\BackupInterface
+     */
+    protected function databaseBackup()
+    {
+        return Backup::database();
+    }
+
+    /**
      * 获取所有的数据表
      * /index/tables.
      *
@@ -90,7 +98,7 @@ class ApiController
      */
     public function tables()
     {
-        $list = Backup::tables();
+        $list = $this->databaseBackup()->tables();
         $ret = [];
         foreach ($list as $k => $item) {
             foreach ($item as $field => $value) {
@@ -102,25 +110,23 @@ class ApiController
             }
         }
 
-        return $this->success($ret);
+        return backup_success($ret);
     }
 
     /**
-     * 获取所有备份文件
-     * /index/filelist.
+     * 获取所有备份文件.
      *
      * @return \think\Response
      */
     public function files()
     {
-        $list = Backup::files();
+        $list = $this->databaseBackup()->files();
 
-        return $this->success($list, '拉去本地文件成功');
+        return backup_success($list, '拉去本地文件成功');
     }
 
     /**
      * 导入
-     * /index/import?name=fastadmin-mysql-20240416184903.sql.
      * 文件过大会导致出现接口超时，读取失败等问题,推荐使用队列进行导入/命令行进行导入.
      *
      * @return \think\Response
@@ -129,62 +135,92 @@ class ApiController
     {
         $file = request()->param('name');
         try {
-            $ret = Backup::import($file);
+            $ret = $this->databaseBackup()->import($file);
 
-            return $this->success($ret, "数据还原成功");
+            return backup_success($ret, "数据还原成功");
         } catch (\Exception $exception) {
-            return $this->error($exception->getMessage());
+            return backup_error($exception->getMessage());
         }
     }
 
     /**
      * 备份第一步
-     * 提交备份任务：/index/backupStep1发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`.
+     * 提交备份任务：/backupStep1发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`.
      *
      * @return \think\Response
      */
     public function backupStep1()
     {
-        $validate = new ExportValidate();
+        $validate = new WebValidate();
         $data = request()->post();
         if ( ! $validate->scene("step1")->check($data)) {
-            return $this->error($validate->getError());
+            return backup_error($validate->getError());
         }
         try {
-            if (Backup::backupStep1($data["tables"])) {
-                return $this->success([
+            if ($this->databaseBackup()->backupStep1($data["tables"])) {
+                return backup_success([
                     'index' => 0,
                     'page' => 1,
                     "tables" => $data["tables"],
                 ], '初始化成功！');
             } else {
-                return $this->error('初始化失败！');
+                return backup_error('初始化失败！');
             }
         } catch (LockException $exception) {
-            return $this->error('检测到有一个备份任务正在执行，请稍后再试！');
+            return backup_error('检测到有一个备份任务正在执行，请稍后再试！');
         } catch (\Exception $exception) {
-            return $this->error($exception->getMessage());
+            return backup_error($exception->getMessage());
+        }
+    }
+
+    /**
+     * 可作为备份第一步，用于前端进度统计.
+     *
+     * @return \think\Response
+     */
+    public function tableCounts()
+    {
+        $validate = new WebValidate();
+        $data = request()->post();
+        if ( ! $validate->scene("step1")->check($data)) {
+            return backup_error($validate->getError());
+        }
+        try {
+            $ret = $this->databaseBackup()->tableCounts($data["tables"]);
+            if ($ret) {
+                return backup_success([
+                    'index' => 0,
+                    'page' => 1,
+                    "tables" => $ret,
+                ], '初始化成功！');
+            } else {
+                return backup_error('初始化失败！');
+            }
+        } catch (LockException $exception) {
+            return backup_error('检测到有一个备份任务正在执行，请稍后再试！');
+        } catch (\Exception $exception) {
+            return backup_error($exception->getMessage());
         }
     }
 
     /**
      * 备份第二步
-     * 发送备份数据请求：/index/export发送get请求/index/backupStep2?index=0&page=0,直到page=0表示该数据备份完成.
+     * 发送备份数据请求：/export发送get请求/backupStep2?index=0&page=0,直到page=0表示该数据备份完成.
      *
      * @return \think\Response
      */
     public function backupStep2()
     {
-        $validate = new ExportValidate();
+        $validate = new WebValidate();
         $data = request()->get();
         if ( ! $validate->scene("step2")->check($data)) {
-            return $this->error($validate->getError());
+            return backup_error($validate->getError());
         }
         $index = (int) $data["index"];
-        $lastPage = Backup::backupStep2($index, $data["page"]);
+        $lastPage = $this->databaseBackup()->backupStep2($index, $data["page"]);
 
         if ($lastPage == 0) {
-            return $this->success([
+            return backup_success([
                 'index' => $index + 1,
                 'page' => 0,
                 "table" => Backup::getCurrentBackupTable(),
@@ -195,17 +231,17 @@ class ApiController
                 $msg = OPT::backupPage($lastPage);
             }
 
-            return $this->success([
+            return backup_success([
                 'index' => $index,
                 'page' => $lastPage,
-                "table" => Backup::getCurrentBackupTable()
+                "table" => $this->databaseBackup()->getCurrentBackupTable()
             ], $msg);
         }
     }
 
     /**
      * 整个库备份完之后清理缓存
-     * /index/cleanup.
+     * /cleanup.
      *
      * @return \think\Response
      *
@@ -213,14 +249,14 @@ class ApiController
      */
     public function cleanup()
     {
-        Backup::cleanup();
+        $this->databaseBackup()->cleanup();
 
-        return $this->success([], '整库备份完毕！');
+        return backup_success([], '整库备份完毕！');
     }
 
     /**
      * 修复表
-     * /index/repair.
+     * /repair.
      *
      * @return \think\Response
      */
@@ -228,18 +264,18 @@ class ApiController
     {
         $tables = request()->post("tables");
         if (is_null($tables)) {
-            return $this->error("没有获取到表");
+            return backup_error("没有获取到表");
         }
-        if (Backup::repair($tables)) {
-            return $this->success($tables, "数据表修复完成！");
+        if ($this->databaseBackup()->repair($tables)) {
+            return backup_success($tables, "数据表修复完成！");
         } else {
-            return $this->error("数据表修复出错请重试");
+            return backup_error("数据表修复出错请重试");
         }
     }
 
     /**
      * 优化表
-     * /index/optimize.
+     * /optimize.
      *
      * @return \think\Response
      */
@@ -247,19 +283,19 @@ class ApiController
     {
         $tables = request()->post("tables");
         if (is_null($tables)) {
-            return $this->error("没有获取到表");
+            return backup_error("没有获取到表");
         }
-        if (Backup::optimize($tables)) {
-            return $this->success($tables, "数据表优化完成！");
+        if ($this->databaseBackup()->optimize($tables)) {
+            return backup_success($tables, "数据表优化完成！");
         } else {
-            return $this->error("数据表优化出错请重试！");
+            return backup_error("数据表优化出错请重试！");
         }
     }
 
     /**
      * 备份文件下载.
      *
-     * /index/download?file=fastadmin-mysql-20240416184903.sql.
+     * /download?file=fastadmin-mysql-20240416184903.sql.
      *
      * @return mixed
      */
@@ -267,10 +303,19 @@ class ApiController
     {
         $filename = request()->param('filename');
 
-        return \think\Response::create($filename, 'file')
-            ->name(pathinfo($filename, PATHINFO_BASENAME))
-            ->isContent(false)
-            ->expire(180);
+        return backup_download($filename);
     }
 
+    /**
+     * 删除备份文件.
+     *
+     * @return \think\Response
+     */
+    public function delete()
+    {
+        $filename = request()->param('filename');
+        unlink($filename);
+
+        return backup_success("", "删除成功");
+    }
 }

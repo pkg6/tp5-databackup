@@ -12,12 +12,19 @@
  * This source file is subject to the MIT license that is bundled.
  */
 
-namespace tp5er\Backup\exception;
+namespace tp5er\Backup\controller;
 
-class ClassDefineException extends \Exception
+use tp5er\Backup\Route;
+
+/**
+ * Class RouteController.
+ *
+ * @see Route
+ */
+class RouteController extends Controller
 {
-    public function __construct($sqlClass, $interface)
+    protected function apiPrefix()
     {
-        parent::__construct(sprintf("%s not implemented OR extends  %s", $sqlClass, $interface), 0, null);
+        return Route::apiPrefix;
     }
 }

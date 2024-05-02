@@ -11,12 +11,14 @@
        table-url="{$routes.files}"
        download-url="{$routes.download}"
        import-url="{$routes.import}"
+       delete-url="{$routes.delete}"
 ></table>
 <!--单行操作-->
 <script type="text/html" id="table-row-opt">
     <div class="layui-btn-container">
         <button class="layui-btn layui-btn-sm" lay-event="download">下载</button>
         <button class="layui-btn layui-btn-sm" lay-event="import">导入</button>
+        <button class="layui-btn layui-btn-sm" lay-event="delete">删除</button>
     </div>
 </script>
 
@@ -30,6 +32,7 @@
         var import_table_url = document.getElementById(elem_import_table).getAttribute("table-url")
         var download_url = document.getElementById(elem_import_table).getAttribute("download-url")
         var import_url = document.getElementById(elem_import_table).getAttribute("import-url")
+        var delete_url = document.getElementById(elem_import_table).getAttribute("delete-url")
         // 渲染
         table.render({
             elem: '#' + elem_import_table,
@@ -70,6 +73,23 @@
                                 type: "GET",
                                 url: import_url,
                                 data: {"name": data.name},
+                                success: function (ret) {
+                                    layer.msg(ret.msg)
+                                }
+                            })
+                            layer.close(index);
+                        }
+                    });
+                    break;
+                case "delete":
+                    layer.msg('确定要删除吗？', {
+                        time: 0 // 永不关闭
+                        , btn: ['确定', '取消']
+                        , yes: function (index) {
+                            $.ajax({
+                                type: "GET",
+                                url: delete_url,
+                                data: {"filename": data.filename},
                                 success: function (ret) {
                                     layer.msg(ret.msg)
                                 }
