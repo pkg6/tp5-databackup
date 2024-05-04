@@ -19,7 +19,7 @@ use think\facade\Route as tpRoute;
 class Route
 {
 
-    const prefix = "/tp5er/backup";
+    const prefix = "/tp5er";
     const apiPrefix = Route::prefix . "/api";
 
     public static function route()
@@ -31,12 +31,10 @@ class Route
     public static function view()
     {
         //http://127.0.0.1:8000/tp5er/backup
-        //http://127.0.0.1:8000/tp5er/backup/import
+        //http://127.0.0.1:8000/tp5er/import
         //备份路由定义
-        tpRoute::group(Route::prefix, function () {
-            tpRoute::get("/", "\\tp5er\Backup\controller\RouteController@backup");
-            tpRoute::get("/import", "\\tp5er\Backup\controller\RouteController@import");
-        });
+        tpRoute::get(Route::prefix . "/backup", "\\tp5er\Backup\controller\RouteController@backup");
+        tpRoute::get(Route::prefix . "/import", "\\tp5er\Backup\controller\RouteController@import");
     }
 
     public static function api()
