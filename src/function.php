@@ -214,3 +214,15 @@ if ( ! function_exists('backup_run')) {
         }
     }
 }
+
+
+if ( ! function_exists('vendor_backup_path')) {
+    /**
+     * @param $path
+     * @return string
+     */
+    function vendor_backup_path($path)
+    {
+        return __DIR__ . DIRECTORY_SEPARATOR.$path;
+    }
+}
