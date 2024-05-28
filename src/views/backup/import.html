@@ -13,6 +13,13 @@
        import-url="{$routes.import}"
        delete-url="{$routes.delete}"
 ></table>
+<!--批量操作-->
+<script type="text/html" id="table-opt">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="backup">备份</button>
+
+    </div>
+</script>
 <!--单行操作-->
 <script type="text/html" id="table-row-opt">
     <div class="layui-btn-container">
@@ -44,6 +51,7 @@
                 {field: 'size', title: '大小', width: 120},
                 {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
             ]],
+            toolbar: '#table-opt',
             initSort: { // 设置初始排序
                 field: 'experience', // 字段名
                 type: 'desc' // 倒序
@@ -102,7 +110,16 @@
                     layer.alert("无法处理此刻操作")
             }
         })
-
+        // 头工具栏事件
+        table.on("toolbar(" + elem_import_table + ")", function (obj) {
+            switch (obj.event) {
+                case "backup":
+                    location.href ="{$routes.view_backup}"
+                    break
+                default:
+                    layer.alert("无法处理此刻操作")
+            }
+        });
 
         exports('import', {});
     });

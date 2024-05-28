@@ -20,10 +20,12 @@
 <!--批量操作-->
 <script type="text/html" id="table-opt">
     <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="import">还原</button>
         <button class="layui-btn layui-btn-sm" id="backups-status" lay-event="backups">备份表</button>
         <button class="layui-btn layui-btn-disabled" id="backup-process">备份状态变化</button>
         <button class="layui-btn layui-btn-sm" lay-event="optimizes">优化表</button>
         <button class="layui-btn layui-btn-sm" lay-event="repairs">修复表</button>
+
     </div>
 </script>
 <!--单行操作-->
@@ -89,7 +91,9 @@
                 case "backups":
                     backupAjax(tables);
                     break;
-
+                case "import":
+                    location.href ="{$routes.view_import}"
+                    break
                 default:
                     layer.alert("无法处理此刻操作")
             }

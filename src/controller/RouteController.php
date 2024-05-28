@@ -21,8 +21,10 @@ use tp5er\Backup\Route;
  *
  * @see Route
  */
-class RouteController extends Controller
+class RouteController
 {
+    use Controller;
+
     protected function apiPrefix()
     {
         return Route::apiPrefix;

@@ -18,9 +18,9 @@ use think\facade\Route as tpRoute;
 
 class Route
 {
-
+    const api = "/api";
     const prefix = "/tp5er";
-    const apiPrefix = Route::prefix . "/api";
+    const apiPrefix = Route::prefix . Route::api;
 
     public static function route()
     {
