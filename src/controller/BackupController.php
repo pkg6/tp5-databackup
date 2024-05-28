@@ -23,6 +23,7 @@ namespace tp5er\Backup\controller;
 class BackupController
 {
     use Controller;
+
     protected function apiPrefix()
     {
         return "/index";
