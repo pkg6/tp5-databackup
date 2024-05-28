@@ -22,10 +22,7 @@ use tp5er\Backup\OPT;
 use tp5er\Backup\Route;
 use tp5er\Backup\validate\WebValidate;
 
-/**
- * 作者是将此控制器继承在Index.php中,所以路由/index/*
- * Class ApiController.
- */
+
 trait Controller
 {
 
@@ -45,6 +42,7 @@ trait Controller
 
     /**
      * @param $view
+     *
      * @return string
      */
     protected function backupFetch($view)
@@ -52,31 +50,32 @@ trait Controller
         $prefix = $this->apiPrefix();
 
         if ($prefix === Route::apiPrefix) {
-            $view_backup=Route::prefix . '/backup';
-            $view_import=Route::prefix . '/import';
-        }else{
-            $view_backup=$prefix . '/backup';
-            $view_import=$prefix . '/import';
+            $view_backup = Route::prefix . '/backup';
+            $view_import = Route::prefix . '/import';
+        } else {
+            $view_backup = $prefix . '/backup';
+            $view_import = $prefix . '/import';
         }
         $routes = [
             'view_backup' => $view_backup,
             'view_import' => $view_import,
 
-            "tables"      => $prefix . "/tables",
-            "optimize"    => $prefix . "/optimize",
-            "repair"      => $prefix . "/repair",
+            "tables" => $prefix . "/tables",
+            "optimize" => $prefix . "/optimize",
+            "repair" => $prefix . "/repair",
             "backupStep1" => $prefix . "/backupStep1",
             "backupStep2" => $prefix . "/backupStep2",
-            "cleanup"     => $prefix . "/cleanup",
-            "files"       => $prefix . "/files",
-            "import"      => $prefix . "/doImport",
-            "download"    => $prefix . "/download",
-            "delete"      => $prefix . "/delete",
+            "cleanup" => $prefix . "/cleanup",
+            "files" => $prefix . "/files",
+            "import" => $prefix . "/doImport",
+            "download" => $prefix . "/download",
+            "delete" => $prefix . "/delete",
         ];
         View::config([
             'view_path' => vendor_backup_path('views' . DIRECTORY_SEPARATOR)
         ]);
         View::assign("routes", $routes);
+
         return View::fetch($view);
     }
 
@@ -117,7 +116,7 @@ trait Controller
     public function tables()
     {
         $list = $this->databaseBackup()->tables();
-        $ret  = [];
+        $ret = [];
         foreach ($list as $k => $item) {
             foreach ($item as $field => $value) {
                 $f = Str::snake($field);
@@ -170,15 +169,15 @@ trait Controller
     public function backupStep1()
     {
         $validate = new WebValidate();
-        $data     = request()->post();
-        if (!$validate->scene("step1")->check($data)) {
+        $data = request()->post();
+        if ( ! $validate->scene("step1")->check($data)) {
             return backup_error($validate->getError());
         }
         try {
             if ($this->databaseBackup()->backupStep1($data["tables"])) {
                 return backup_success([
-                    'index'  => 0,
-                    'page'   => 1,
+                    'index' => 0,
+                    'page' => 1,
                     "tables" => $data["tables"],
                 ], '初始化成功！');
             } else {
@@ -199,16 +198,16 @@ trait Controller
     public function tableCounts()
     {
         $validate = new WebValidate();
-        $data     = request()->post();
-        if (!$validate->scene("step1")->check($data)) {
+        $data = request()->post();
+        if ( ! $validate->scene("step1")->check($data)) {
             return backup_error($validate->getError());
         }
         try {
             $ret = $this->databaseBackup()->tableCounts($data["tables"]);
             if ($ret) {
                 return backup_success([
-                    'index'  => 0,
-                    'page'   => 1,
+                    'index' => 0,
+                    'page' => 1,
                     "tables" => $ret,
                 ], '初始化成功！');
             } else {
@@ -230,17 +229,17 @@ trait Controller
     public function backupStep2()
     {
         $validate = new WebValidate();
-        $data     = request()->get();
-        if (!$validate->scene("step2")->check($data)) {
+        $data = request()->get();
+        if ( ! $validate->scene("step2")->check($data)) {
             return backup_error($validate->getError());
         }
-        $index    = (int)$data["index"];
+        $index = (int) $data["index"];
         $lastPage = $this->databaseBackup()->backupStep2($index, $data["page"]);
 
         if ($lastPage == 0) {
             return backup_success([
                 'index' => $index + 1,
-                'page'  => 0,
+                'page' => 0,
                 "table" => Backup::getCurrentBackupTable(),
             ], '单表备份完毕！');
         } else {
@@ -251,7 +250,7 @@ trait Controller
 
             return backup_success([
                 'index' => $index,
-                'page'  => $lastPage,
+                'page' => $lastPage,
                 "table" => $this->databaseBackup()->getCurrentBackupTable()
             ], $msg);
         }
