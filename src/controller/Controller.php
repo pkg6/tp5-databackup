@@ -19,6 +19,7 @@ use think\helper\Str;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\facade\Backup;
 use tp5er\Backup\OPT;
+use tp5er\Backup\Route;
 use tp5er\Backup\validate\WebValidate;
 
 /**
@@ -27,17 +28,40 @@ use tp5er\Backup\validate\WebValidate;
  */
 trait Controller
 {
+
+    /**
+     * @var string
+     */
+    protected $viewbackup = 'backup/backup';
+    /**
+     * @var string
+     */
+    protected $viewimport = 'backup/import';
+
+    /**
+     * @return string
+     */
     abstract protected function apiPrefix();
 
     /**
-     * 路由.
-     *
-     * @return string[]
+     * @param $view
+     * @return string
      */
-    protected function apiRoute()
+    protected function backupFetch($view)
     {
         $prefix = $this->apiPrefix();
-        return [
+
+        if ($prefix === Route::apiPrefix) {
+            $view_backup=Route::prefix . '/backup';
+            $view_import=Route::prefix . '/import';
+        }else{
+            $view_backup=$prefix . '/backup';
+            $view_import=$prefix . '/import';
+        }
+        $routes = [
+            'view_backup' => $view_backup,
+            'view_import' => $view_import,
+
             "tables"      => $prefix . "/tables",
             "optimize"    => $prefix . "/optimize",
             "repair"      => $prefix . "/repair",
@@ -49,6 +73,11 @@ trait Controller
             "download"    => $prefix . "/download",
             "delete"      => $prefix . "/delete",
         ];
+        View::config([
+            'view_path' => vendor_backup_path('views' . DIRECTORY_SEPARATOR)
+        ]);
+        View::assign("routes", $routes);
+        return View::fetch($view);
     }
 
     /**
@@ -58,12 +87,7 @@ trait Controller
      */
     public function backup()
     {
-        View::config([
-            'view_path' => vendor_backup_path('views' . DIRECTORY_SEPARATOR)
-        ]);
-        View::assign("routes", $this->apiRoute());
-
-        return View::fetch("backup/backup");
+        return $this->backupFetch($this->viewbackup);
     }
 
     /**
@@ -73,12 +97,7 @@ trait Controller
      */
     public function import()
     {
-        View::config([
-            'view_path' =>vendor_backup_path('views' . DIRECTORY_SEPARATOR)
-        ]);
-        View::assign("routes", $this->apiRoute());
-
-        return View::fetch("backup/import");
+        return $this->backupFetch($this->viewimport);
     }
 
     /**
