@@ -226,3 +226,17 @@ if ( ! function_exists('vendor_backup_path')) {
         return __DIR__ . DIRECTORY_SEPARATOR.$path;
     }
 }
+
+if (!function_exists('yield_path')) {
+    /**
+     * @param $path
+     * @return RecursiveIteratorIterator
+     */
+    function yield_path($path)
+    {
+        return new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($path),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+    }
+}
