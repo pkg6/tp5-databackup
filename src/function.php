@@ -215,21 +215,22 @@ if ( ! function_exists('backup_run')) {
     }
 }
 
-
 if ( ! function_exists('vendor_backup_path')) {
     /**
      * @param $path
+     *
      * @return string
      */
     function vendor_backup_path($path)
     {
-        return __DIR__ . DIRECTORY_SEPARATOR.$path;
+        return __DIR__ . DIRECTORY_SEPARATOR . $path;
     }
 }
 
-if (!function_exists('yield_path')) {
+if ( ! function_exists('yield_path')) {
     /**
      * @param $path
+     *
      * @return RecursiveIteratorIterator
      */
     function yield_path($path)

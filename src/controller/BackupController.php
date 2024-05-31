@@ -14,6 +14,8 @@
 
 namespace tp5er\Backup\controller;
 
+use think\facade\View;
+
 /**
  * Class BackupController
  * composer require topthink/think-view
@@ -24,8 +26,38 @@ class BackupController
 {
     use Controller;
 
-    protected function apiPrefix()
+    protected $prefix = "/index";
+
+    protected function fetch($name)
     {
-        return "/index";
+        View::config([
+            'view_path' => vendor_backup_path('views' . DIRECTORY_SEPARATOR)
+        ]);
+        View::assign("routes", array_merge($this->apiRoutes($this->prefix), [
+            'view_backup' => $this->prefix . '/index',
+            'view_import' => $this->prefix . '/import',
+        ]));
+        return View::fetch($name);
     }
+
+    /**
+     * 备份视图渲染.
+     *
+     * @return string
+     */
+    public function index()
+    {
+        return $this->fetch('backup/backup');
+    }
+
+    /**
+     * 还原视图渲染.
+     *
+     * @return string
+     */
+    public function import()
+    {
+        return $this->fetch('backup/import');
+    }
+
 }
