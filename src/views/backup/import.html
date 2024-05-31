@@ -25,12 +25,22 @@
 </script>
 
 <script src="//unpkg.com/layui@2.9.8/dist/layui.js"></script>
+<!--https://github.com/pkg6/think-backup/blob/main/src/tp5er.js-->
 <script src="https://cdn.jsdelivr.net/gh/pkg6/think-backup@main/src/tp5er.js"></script>
 <script>
     layui.define(['tp5er'], function (exports) {
         var tp5er = layui.tp5er
         tp5er.imports.bind('elem-import-table')
-            .render('table-row-opt', 'table-opt')
+            .render('table-opt',{
+                cols: [[
+                    {field: 'name', title: '文件名', width: 120},
+                    {field: 'database', title: '数据库', width: 120},
+                    {field: 'connection', title: '数据库链接', width: 120},
+                    {field: 'size', title: '大小', width: 120},
+                    {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
+                ]],
+                toolbar: '#table-opt',
+            })
             .on()
     });
 </script>

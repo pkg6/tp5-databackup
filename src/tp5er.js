@@ -9,7 +9,7 @@ layui.define(['table', 'form', 'layer'], function (exports) {
             for (let prop in obj) {
                 if (obj.hasOwnProperty(prop)) {
                     if (Object.prototype.toString.call(obj[prop]) === '[object Object]') {
-                        res[prop] = helper.merger(res[prop], obj[prop]);
+                        res[prop] = merger(res[prop], obj[prop]);
                     } else {
                         res[prop] = obj[prop];
                     }
@@ -47,22 +47,10 @@ layui.define(['table', 'form', 'layer'], function (exports) {
             this.url = document.getElementById(this.elem).getAttribute("lay-url")
             return this
         },
-        render: function (rowtoolbar, toolbar, options) {
+        render: function (options) {
             options = merger(options ? options : {}, {
                 elem: '#' + backup.elem,
                 url: backup.url,
-                cols: [[
-                    {type: 'checkbox', fixed: 'left'},
-                    {field: 'name', title: '表名', width: 200},
-                    {field: 'engine', title: '引擎', width: 120},
-                    {field: 'rows', title: '数据量', width: 120},
-                    {field: 'data_length', title: '数据大小', width: 120},
-                    {field: 'collation', title: '排序规则', width: 180},
-                    {field: 'comment', title: '表注释', width: 120},
-                    {field: 'create_time', title: '创建时间', width: 180},
-                    {fixed: 'right', title: '操作', width: 200, toolbar: '#' + rowtoolbar}
-                ]],
-                toolbar: '#' + toolbar,
             })
             table.render(options);
             return this
@@ -186,18 +174,10 @@ layui.define(['table', 'form', 'layer'], function (exports) {
             this.url = document.getElementById(this.elem).getAttribute("lay-url")
             return this
         },
-        render: function (rowtoolbar, toolbar, options) {
+        render: function ( options) {
             options = merger(options ? options : {}, {
                 elem: '#' + imports.elem,
                 url: imports.url,
-                cols: [[
-                    {field: 'name', title: '文件名', width: 120},
-                    {field: 'database', title: '数据库', width: 120},
-                    {field: 'connection', title: '数据库链接', width: 120},
-                    {field: 'size', title: '大小', width: 120},
-                    {fixed: 'right', title: '操作', width: 200, toolbar: '#' + rowtoolbar}
-                ]],
-                toolbar: '#' + toolbar,
             })
             table.render(options);
             return this

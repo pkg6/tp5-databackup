@@ -35,13 +35,27 @@
 </script>
 
 <script src="//unpkg.com/layui@2.9.8/dist/layui.js"></script>
+<!--https://github.com/pkg6/think-backup/blob/main/src/tp5er.js-->
 <script src="https://cdn.jsdelivr.net/gh/pkg6/think-backup@main/src/tp5er.js"></script>
 
 <script>
     layui.define(['tp5er'], function (exports) {
         var tp5er = layui.tp5er
         tp5er.backup.bind('elem-backup-tables')
-            .render('table-row-opt', 'table-opt')
+            .render({
+                cols: [[
+                    {type: 'checkbox', fixed: 'left'},
+                    {field: 'name', title: '表名', width: 200},
+                    {field: 'engine', title: '引擎', width: 120},
+                    {field: 'rows', title: '数据量', width: 120},
+                    {field: 'data_length', title: '数据大小', width: 120},
+                    {field: 'collation', title: '排序规则', width: 180},
+                    {field: 'comment', title: '表注释', width: 120},
+                    {field: 'create_time', title: '创建时间', width: 180},
+                    {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
+                ]],
+                toolbar: '#table-opt',
+            })
             .on()
     });
 </script>
