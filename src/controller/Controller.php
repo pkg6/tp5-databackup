@@ -14,52 +14,23 @@
 
 namespace tp5er\Backup\controller;
 
-use think\facade\View;
 use think\helper\Str;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\facade\Backup;
 use tp5er\Backup\OPT;
-use tp5er\Backup\Route;
 use tp5er\Backup\validate\WebValidate;
-
 
 trait Controller
 {
 
     /**
-     * @var string
-     */
-    protected $viewbackup = 'backup/backup';
-    /**
-     * @var string
-     */
-    protected $viewimport = 'backup/import';
-
-    /**
-     * @return string
-     */
-    abstract protected function apiPrefix();
-
-    /**
-     * @param $view
+     * @param $prefix
      *
-     * @return string
+     * @return string[]
      */
-    protected function backupFetch($view)
+    protected function apiRoutes($prefix)
     {
-        $prefix = $this->apiPrefix();
-
-        if ($prefix === Route::apiPrefix) {
-            $view_backup = Route::prefix . '/backup';
-            $view_import = Route::prefix . '/import';
-        } else {
-            $view_backup = $prefix . '/backup';
-            $view_import = $prefix . '/import';
-        }
-        $routes = [
-            'view_backup' => $view_backup,
-            'view_import' => $view_import,
-
+        return [
             "tables" => $prefix . "/tables",
             "optimize" => $prefix . "/optimize",
             "repair" => $prefix . "/repair",
@@ -71,32 +42,6 @@ trait Controller
             "download" => $prefix . "/download",
             "delete" => $prefix . "/delete",
         ];
-        View::config([
-            'view_path' => vendor_backup_path('views' . DIRECTORY_SEPARATOR)
-        ]);
-        View::assign("routes", $routes);
-
-        return View::fetch($view);
-    }
-
-    /**
-     * 备份视图渲染.
-     *
-     * @return string
-     */
-    public function backup()
-    {
-        return $this->backupFetch($this->viewbackup);
-    }
-
-    /**
-     * 还原视图渲染.
-     *
-     * @return string
-     */
-    public function import()
-    {
-        return $this->backupFetch($this->viewimport);
     }
 
     /**
