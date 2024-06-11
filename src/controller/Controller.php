@@ -15,6 +15,7 @@
 namespace tp5er\Backup\controller;
 
 use think\helper\Str;
+use think\response\Json;
 use tp5er\Backup\exception\LockException;
 use tp5er\Backup\facade\Backup;
 use tp5er\Backup\OPT;
@@ -31,16 +32,16 @@ trait Controller
     protected function apiRoutes($prefix)
     {
         return [
-            "tables" => $prefix . "/tables",
-            "optimize" => $prefix . "/optimize",
-            "repair" => $prefix . "/repair",
+            "tables"      => $prefix . "/tables",
+            "optimize"    => $prefix . "/optimize",
+            "repair"      => $prefix . "/repair",
             "backupStep1" => $prefix . "/backupStep1",
             "backupStep2" => $prefix . "/backupStep2",
-            "cleanup" => $prefix . "/cleanup",
-            "files" => $prefix . "/files",
-            "import" => $prefix . "/doImport",
-            "download" => $prefix . "/download",
-            "delete" => $prefix . "/delete",
+            "cleanup"     => $prefix . "/cleanup",
+            "files"       => $prefix . "/files",
+            "import"      => $prefix . "/doImport",
+            "download"    => $prefix . "/download",
+            "delete"      => $prefix . "/delete",
         ];
     }
 
@@ -53,15 +54,16 @@ trait Controller
     }
 
     /**
-     * 获取所有的数据表
-     * /index/tables.
      *
+     * /index/tables.
+     * @summary 获取数据表
+     * @description 获取数据库中所有的表
      * @return \think\Response
      */
     public function tables()
     {
         $list = $this->databaseBackup()->tables();
-        $ret = [];
+        $ret  = [];
         foreach ($list as $k => $item) {
             foreach ($item as $field => $value) {
                 $f = Str::snake($field);
@@ -76,8 +78,8 @@ trait Controller
     }
 
     /**
-     * 获取所有备份文件.
-     *
+     * @summary 备份文件列表
+     * @description 获取所有备份文件.
      * @return \think\Response
      */
     public function files()
@@ -88,10 +90,10 @@ trait Controller
     }
 
     /**
-     * 导入
-     * 文件过大会导致出现接口超时，读取失败等问题,推荐使用队列进行导入/命令行进行导入.
-     *
-     * @return \think\Response
+     * @param string name 文件路径
+     * @summary 导入
+     * @description 文件过大会导致出现接口超时，读取失败等问题,推荐使用队列进行导入/命令行进行导入.
+     * @return \think\Response|Json
      */
     public function doImport()
     {
@@ -106,23 +108,22 @@ trait Controller
     }
 
     /**
-     * 备份第一步
-     * 提交备份任务：/backupStep1发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`.
-     *
-     * @return \think\Response
+     * @summary 备份第一步
+     * @description 提交备份任务/backupStep1发送post请求，数据格式`{ "tables": ["admin","log"]}` 响应`['index' => 0, 'page' => 1]`.
+     * @return \think\Response|Json
      */
     public function backupStep1()
     {
         $validate = new WebValidate();
-        $data = request()->post();
-        if ( ! $validate->scene("step1")->check($data)) {
+        $data     = request()->post();
+        if (!$validate->scene("step1")->check($data)) {
             return backup_error($validate->getError());
         }
         try {
             if ($this->databaseBackup()->backupStep1($data["tables"])) {
                 return backup_success([
-                    'index' => 0,
-                    'page' => 1,
+                    'index'  => 0,
+                    'page'   => 1,
                     "tables" => $data["tables"],
                 ], '初始化成功！');
             } else {
@@ -136,23 +137,23 @@ trait Controller
     }
 
     /**
-     * 可作为备份第一步，用于前端进度统计.
-     *
-     * @return \think\Response
+     * @summary 备份第一步
+     * @description 可作为备份第一步，用于前端进度统计.
+     * @return \think\Response|Json
      */
     public function tableCounts()
     {
         $validate = new WebValidate();
-        $data = request()->post();
-        if ( ! $validate->scene("step1")->check($data)) {
+        $data     = request()->post();
+        if (!$validate->scene("step1")->check($data)) {
             return backup_error($validate->getError());
         }
         try {
             $ret = $this->databaseBackup()->tableCounts($data["tables"]);
             if ($ret) {
                 return backup_success([
-                    'index' => 0,
-                    'page' => 1,
+                    'index'  => 0,
+                    'page'   => 1,
                     "tables" => $ret,
                 ], '初始化成功！');
             } else {
@@ -166,25 +167,25 @@ trait Controller
     }
 
     /**
-     * 备份第二步
-     * 发送备份数据请求：/export发送get请求/backupStep2?index=0&page=0,直到page=0表示该数据备份完成.
+     * @summary 备份第二步
+     * @description 发送备份数据请求：/export发送get请求/backupStep2?index=0&page=0,直到page=0表示该数据备份完成.
      *
-     * @return \think\Response
+     * @return \think\Response|Json
      */
     public function backupStep2()
     {
         $validate = new WebValidate();
-        $data = request()->get();
-        if ( ! $validate->scene("step2")->check($data)) {
+        $data     = request()->get();
+        if (!$validate->scene("step2")->check($data)) {
             return backup_error($validate->getError());
         }
-        $index = (int) $data["index"];
+        $index    = (int)$data["index"];
         $lastPage = $this->databaseBackup()->backupStep2($index, $data["page"]);
 
         if ($lastPage == 0) {
             return backup_success([
                 'index' => $index + 1,
-                'page' => 0,
+                'page'  => 0,
                 "table" => Backup::getCurrentBackupTable(),
             ], '单表备份完毕！');
         } else {
@@ -195,18 +196,16 @@ trait Controller
 
             return backup_success([
                 'index' => $index,
-                'page' => $lastPage,
+                'page'  => $lastPage,
                 "table" => $this->databaseBackup()->getCurrentBackupTable()
             ], $msg);
         }
     }
 
     /**
-     * 整个库备份完之后清理缓存
-     * /cleanup.
-     *
-     * @return \think\Response
-     *
+     * @summary 备份完成第三部
+     * @description 整个库备份完之后清理缓存
+     * @return \think\Response|Json
      * @see export
      */
     public function cleanup()
@@ -217,9 +216,8 @@ trait Controller
     }
 
     /**
-     * 修复表
-     * /repair.
-     *
+     * @summary 修复表
+     * @param array|string tables
      * @return \think\Response
      */
     public function repair()
@@ -236,10 +234,9 @@ trait Controller
     }
 
     /**
-     * 优化表
-     * /optimize.
-     *
-     * @return \think\Response
+     * @summary 优化表
+     * @param array|string tables
+     * @return \think\Response|Json
      */
     public function optimize()
     {
@@ -255,10 +252,10 @@ trait Controller
     }
 
     /**
-     * 备份文件下载.
-     *
+     * @summary 文件下载
+     * @param string filename
+     * @return \think\Response
      * /download?file=fastadmin-mysql-20240416184903.sql.
-     *
      * @return mixed
      */
     public function download()
@@ -269,9 +266,9 @@ trait Controller
     }
 
     /**
-     * 删除备份文件.
-     *
-     * @return \think\Response
+     * @summary 删除备份文件
+     * @param string filename
+     * @return \think\Response|Json
      */
     public function delete()
     {
