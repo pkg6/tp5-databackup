@@ -37,6 +37,7 @@ class BackupController
             'view_backup' => $this->prefix . '/index',
             'view_import' => $this->prefix . '/import',
         ]));
+
         return View::fetch($name);
     }
 
