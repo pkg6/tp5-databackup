@@ -16,7 +16,7 @@
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.9",
     "topthink/think-queue": "^3.0",
-    "topthink/think-view": "^1.0",
+    "topthink/think-view": "^1.0 || ^2.0",
     "topthink/framework": "^6.0 || ^8.0"
   },
   "autoload": {

@@ -89,6 +89,40 @@ php think backup:list
 php think backup:cleanup
 ~~~
 
+### 使用方式5: 自定义（1.x升级到2.x）
+
+> 1.x和2.x 方法对比
+
+| 1.x                                                          | 2.x                                                          | 描述         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------ |
+| [点击跳转](https://github.com/pkg6/tp5-databackup/blob/ac29c488bca8a4a123b105ef2959a6cde1f67649/src/Backup.php#L54) | [点击跳转](https://github.com/pkg6/tp5-databackup/blob/main/config/backup.php) | 配置项       |
+| $db= new \tp5er\Backup\Backup([$config](https://github.com/pkg6/tp5-databackup/blob/ac29c488bca8a4a123b105ef2959a6cde1f67649/src/Backup.php#L54)); | 无需初始化使用facade方式                                     | 初始化       |
+| $db->dataList()                                              | Backup::tables()                                             | 数据类表列表 |
+| $db->fileList()                                              | Backup::files()                                              | 备份文件列表 |
+| $tables="数据库表列表"; $start= $db->setFile($file)->backup($tables[$id], 0); |                                                              | 备份表       |
+| $db->setFile($file)->import($start)                          | Backup::import($file)                                        | 导入表       |
+| delFile($time)                                               | unlink($filename)                                            | 删除备份文件 |
+| downloadFile($time)                                          | backup_download($filename)                                   | 下载备份文件 |
+| $db->repair($tables)                                         | Backup::repair($tables)                                      | 修复表       |
+| $db->optimize($tables)                                       | Backup::optimize($tables)                                    | 优化表       |
+| https://github.com/pkg6/tp5-databackup/tree/1.x/tp5-demo     | 进行了内置 [控制器](https://github.com/pkg6/tp5-databackup/tree/main/src/controller) 和 [视图](https://github.com/pkg6/tp5-databackup/tree/main/src/views/backup) | 案例代码     |
+
+>  备份表
+>
+> 1.x  是控制器中将需备份到表结构写到缓存/cookie中，然后根据索引找到表
+>
+> $tables="数据库表列表"; 
+>
+> $start= $db->setFile($file)->backup($tables[$id], 0);
+>
+> 2.x 将需备份到表写到缓存中，无需您来处理，只需要您进行按步骤操作
+>
+> 第一步将备份到表进行缓存，关键方法： Backup::backupStep1($tables)
+>
+> 第二步备份表结构和数据，关键方法：Backup::backupStep2($tableIndex,$page),返回page直到page=0 循环结束表和表数据备份完毕
+>
+> 第三步清理缓存，关键方法Backup::cleanup()
+
 ## 事件`参考代码`
 
 ~~~
@@ -168,7 +202,7 @@ BackupManager：所有的相关操作都在这里
 
 main 分支 ：2.x版本最新代码，tag2.x标签是在该分支进行上
 
-master分支 ：1.x版本的最新代码，tag1.x标签是在该分支进行上
+1.x分支 ：1.x版本的最新代码，tag1.x标签是在该分支进行上
 
 develop分支：作者的开发分支，主要开发2.x版本的bug
 
