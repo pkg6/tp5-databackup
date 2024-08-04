@@ -87,22 +87,22 @@ class Mysql implements ReaderInterface
     public function copyright(BackupInterface $backup)
     {
 
-        $config   = $backup->getDatabaseConfig();
+        $config = $backup->getDatabaseConfig();
         $hostname = Arr::get($config, "hostname");
         $hostport = Arr::get($config, "hostport");
-        $sql      = "-- -----------------------------" . PHP_EOL;
-        $sql      .= "-- tp5-databackup SQL Dump " . PHP_EOL;
-        $sql      .= "-- version " . databackup_version() . PHP_EOL;
-        $sql      .= "-- https://github.com/pkg6/tp5-databackup " . PHP_EOL;
-        $sql      .= "-- " . PHP_EOL;
-        $sql      .= "-- Host     : " . $hostname . PHP_EOL;
-        $sql      .= "-- Port     : " . $hostport . PHP_EOL;
-        $sql      .= "-- Database : " . $backup->getDatabase() . PHP_EOL;
-        $sql      .= "-- PHP Version : " . phpversion() . PHP_EOL;
-        $sql      .= "-- Date : " . date("Y-m-d H:i:s") . PHP_EOL;
-        $sql      .= "-- -----------------------------" . PHP_EOL . PHP_EOL;
-        $sql      .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
-        $sql      .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;
+        $sql = "-- -----------------------------" . PHP_EOL;
+        $sql .= "-- tp5-databackup SQL Dump " . PHP_EOL;
+        $sql .= "-- version " . databackup_version() . PHP_EOL;
+        $sql .= "-- https://github.com/pkg6/tp5-databackup " . PHP_EOL;
+        $sql .= "-- " . PHP_EOL;
+        $sql .= "-- Host     : " . $hostname . PHP_EOL;
+        $sql .= "-- Port     : " . $hostport . PHP_EOL;
+        $sql .= "-- Database : " . $backup->getDatabase() . PHP_EOL;
+        $sql .= "-- PHP Version : " . phpversion() . PHP_EOL;
+        $sql .= "-- Date : " . date("Y-m-d H:i:s") . PHP_EOL;
+        $sql .= "-- -----------------------------" . PHP_EOL . PHP_EOL;
+        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
+        $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;
 
         return $sql;
     }
@@ -177,14 +177,15 @@ class Mysql implements ReaderInterface
     protected function executeTableStructure($table)
     {
         $result = $this->connection->query("SHOW CREATE TABLE `{$table}`");
-        $sql    = trim($result[0]['Create Table'] ?? $result[0]['Create View']);
-        if (!empty($result[0]["Create View"])) {
+        $sql = trim($result[0]['Create Table'] ?? $result[0]['Create View']);
+        if ( ! empty($result[0]["Create View"])) {
             return [false, $sql];
         }
 
-        if (!Str::endsWith($sql, ';')) {
+        if ( ! Str::endsWith($sql, ';')) {
             $sql .= ' ;';
         }
+
         return [true, $sql];
     }
 
@@ -236,8 +237,8 @@ class Mysql implements ReaderInterface
             return [0, ""];
         }
         $tableFieldArr = $this->tableField($result[0]);
-        $sql           = "INSERT INTO `{$table}` (" . implode(",", $tableFieldArr) . ") VALUES ";
-        $tableDataArr  = [];
+        $sql = "INSERT INTO `{$table}` (" . implode(",", $tableFieldArr) . ") VALUES ";
+        $tableDataArr = [];
         foreach ($result as &$row) {
             foreach ($row as &$val) {
                 if (is_numeric($val)) {
