@@ -17,7 +17,6 @@ namespace tp5er\Backup\reader;
 use think\App;
 use think\db\ConnectionInterface;
 use think\helper\Arr;
-use think\helper\Str;
 use tp5er\Backup\BackupInterface;
 use tp5er\Backup\exception\SQLExecuteException;
 use tp5er\Backup\exception\WriteException;
@@ -176,14 +175,12 @@ class Mysql implements ReaderInterface
      */
     protected function executeTableStructure($table)
     {
+        /** @var TYPE_NAME $result */
         $result = $this->connection->query("SHOW CREATE TABLE `{$table}`");
         $sql = trim($result[0]['Create Table'] ?? $result[0]['Create View']);
+        $sql .= ";" . PHP_EOL;
         if ( ! empty($result[0]["Create View"])) {
             return [false, $sql];
-        }
-
-        if ( ! Str::endsWith($sql, ';')) {
-            $sql .= ' ;';
         }
 
         return [true, $sql];
@@ -221,6 +218,8 @@ class Mysql implements ReaderInterface
         //INSERT INTO 开始事务的方式
         //$sql .= "BEGIN;";
         $sql .= $instertSQL;
+
+        $sql .= ";";
 
         //$sql .= "COMMIT;";
         return [$sql, $lastPage];
