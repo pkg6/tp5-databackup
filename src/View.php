@@ -16,6 +16,13 @@ namespace tp5er\Backup;
 
 class View
 {
+    /**
+     * https://purge.jsdelivr.net/gh/pkg6/tp5-databackup@main/src/tp5er.js.
+     *
+     * @param $routes
+     *
+     * @return void
+     */
     public static function view($routes)
     {
         \think\facade\View::config([
