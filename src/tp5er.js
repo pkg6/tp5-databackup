@@ -74,12 +74,12 @@ layui.define(['table', 'form', 'layer'], function (exports) {
                 var step2_url = elem.getAttribute("step2-url")
                 var step3_url = elem.getAttribute("step3-url")
                 var process_id = elem.getAttribute("backup-process-id")
-                backup.events.step1(step1_url, tables, function (ret) {
+                backup.events.step1(step1_url, tables, function (ret1) {
                     elem.classList.add('layui-btn-disabled')
-                    backup.events.process_msg(process_id, ret.msg)
-                    backup.events.step2(step2_url, ret.data.index, ret.data.page, function (ret) {
-                        backup.events.process_msg(process_id, "当前正在备份的表:" + ret.data.table)
-                        backup.events.step3(step3_url, function (ret) {
+                    backup.events.process_msg(process_id, ret1.msg)
+                    backup.events.step2(step2_url, ret1.data.index, ret1.data.page, function (ret2) {
+                        backup.events.process_msg(process_id, "当前正在备份的表:" + ret2.data.table)
+                        backup.events.step3(step3_url, ret2, function (ret3) {
                             backup.events.process_msg(process_id, "备份完毕")
                             elem.classList.remove('layui-btn-disabled')
                         })
@@ -145,7 +145,7 @@ layui.define(['table', 'form', 'layer'], function (exports) {
                     success: function (ret) {
                         if (ret.code === 0) {
                             if (ret.data.page >= 0) {
-                                backup.events.step2(url, ret.data.index, ret.data.page)
+                                backup.events.step2(url, ret.data.index, ret.data.page, callback)
                             }
                             typeof callback === "function" && callback(ret);
                         } else {
@@ -154,14 +154,17 @@ layui.define(['table', 'form', 'layer'], function (exports) {
                     }
                 })
             },
-            step3: function (url, callback) {
-                $.ajax({
-                    type: "GET",
-                    url: url,
-                    success: function (ret) {
-                        typeof callback === "function" && callback(ret);
-                    }
-                })
+            step3: function (url, ret2, callback) {
+                console.log("当前正在备份的表:" + ret2.data.table)
+                if (ret2.data.page === -1) {
+                    $.ajax({
+                        type: "GET",
+                        url: url,
+                        success: function (ret) {
+                            typeof callback === "function" && callback(ret);
+                        }
+                    })
+                }
             },
 
         }
@@ -174,7 +177,7 @@ layui.define(['table', 'form', 'layer'], function (exports) {
             this.url = document.getElementById(this.elem).getAttribute("lay-url")
             return this
         },
-        render: function ( options) {
+        render: function (options) {
             options = merger(options ? options : {}, {
                 elem: '#' + imports.elem,
                 url: imports.url,
@@ -227,7 +230,7 @@ layui.define(['table', 'form', 'layer'], function (exports) {
                     }
                 });
             },
-            import:function (elem, obj){
+            import: function (elem, obj) {
                 var url = elem.getAttribute("lay-url")
                 var data = obj.data;
                 layer.msg('确定要导入吗？', {
