@@ -24,6 +24,7 @@ use tp5er\Backup\exception\WriteException;
 
 class Mysql implements ReaderInterface
 {
+    const NAME = "mysql";
     /**
      * @var App
      */
@@ -58,7 +59,7 @@ class Mysql implements ReaderInterface
      */
     public function type()
     {
-        return "mysql";
+        return self::NAME;
     }
 
     /**
