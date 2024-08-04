@@ -26,4 +26,8 @@ return [
     ],
     //一次请求存储100条数据
     "limit" => 100,
+    'layui' => [
+        'tp5er.js' => 'https://cdn.jsdelivr.net/gh/pkg6/think-backup@2.2.7/src/tp5er.js',
+    ],
+
 ];

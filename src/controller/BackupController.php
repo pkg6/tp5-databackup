@@ -30,13 +30,11 @@ class BackupController
 
     protected function fetch($name)
     {
-        View::config([
-            'view_path' => vendor_backup_path('views' . DIRECTORY_SEPARATOR)
-        ]);
-        View::assign("routes", array_merge($this->apiRoutes($this->prefix), [
+        $routes = array_merge($this->apiRoutes($this->prefix), [
             'view_backup' => $this->prefix . '/index',
             'view_import' => $this->prefix . '/import',
-        ]));
+        ]);
+        \tp5er\Backup\View::view($routes);
 
         return View::fetch($name);
     }
