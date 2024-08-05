@@ -153,10 +153,16 @@ class Mysql implements ReaderInterface
     {
         $result = $this->connection->query("SHOW CREATE TABLE `{$table}`");
         $sql = SQLFormat::executeTableStructure($result);
-        if ( ! empty($result[0]["Create View"])) {
+        if (!empty($result[0]["Create View"])) {
             return [false, $sql];
         }
         return [true, $sql];
+    }
+
+    public function renameTable($table, $newName)
+    {
+        $sql = "RENAME TABLE `{$table}` TO `{$newName}`;";
+        return $this->connection->query($sql);
     }
 
     /**
