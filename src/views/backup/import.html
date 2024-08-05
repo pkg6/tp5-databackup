@@ -12,6 +12,7 @@
 <script type="text/html" id="table-opt">
     <div class="layui-btn-container">
         <button class="layui-btn layui-btn-sm" lay-event="backup" lay-url="{$routes.view_backup}">备份</button>
+        <button class="layui-btn layui-btn-sm" lay-event="deletes" lay-url="{$routes.delete}">删除</button>
 
     </div>
 </script>
@@ -34,6 +35,7 @@
         tp5er.imports.bind('elem-import-table')
             .render({
                 cols: [[
+                    {type: 'checkbox', fixed: 'left'},
                     {field: 'name', title: '文件名', width: 120},
                     {field: 'database', title: '数据库', width: 120},
                     {field: 'connection', title: '数据库链接', width: 120},

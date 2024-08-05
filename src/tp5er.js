@@ -208,11 +208,43 @@ layui.define(['table', 'form', 'layer'], function (exports) {
                         $.ajax({
                             type: "GET",
                             url: url,
-                            data: {"filename": data.filename},
+                            data: {"filename": data.name},
                             success: function (ret) {
                                 obj.del()
                                 layer.msg(ret.msg)
                             }
+                        })
+                        layer.close(index);
+                    }
+                });
+            },
+            deletes: function (elem, obj) {
+                var data = table.checkStatus(obj.config.id).data;
+                if (data.length <= 0){
+                    return layer.msg('请选择需要删除的备份文件')
+                }
+                var url = elem.getAttribute("lay-url")
+                var names = []
+                var filenames = []
+                data.forEach(element => {
+                    names.push(element.name)
+                    filenames.push(element.filename)
+                });
+                layer.msg('确定要删除吗？' + names.join(","), {
+                    time: 0
+                    , btn: ['确定', '取消']
+                    , yes: function (index) {
+                        filenames.forEach(file => {
+                            $.ajax({
+                                type: "GET",
+                                url: url,
+                                async: true,
+                                data: {"filename": file},
+                                success: function (ret) {
+                                    // obj.del()
+                                    layer.msg(ret.msg)
+                                }
+                            })
                         })
                         layer.close(index);
                     }
@@ -252,6 +284,5 @@ layui.define(['table', 'form', 'layer'], function (exports) {
         }
 
     }
-
     exports('tp5er', {backup: backup, imports: imports});
 });
