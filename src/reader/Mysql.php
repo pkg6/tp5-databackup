@@ -16,6 +16,7 @@ namespace tp5er\Backup\reader;
 
 use think\App;
 use think\db\ConnectionInterface;
+use think\helper\Arr;
 use tp5er\Backup\BackupInterface;
 use tp5er\Backup\exception\SQLExecuteException;
 use tp5er\Backup\exception\WriteException;
@@ -139,9 +140,7 @@ class Mysql implements ReaderInterface
     public function tableStructure($table)
     {
         list($isBackupData, $createTableSQL) = $this->executeTableStructure($table);
-
-        $sql = SQLFormat::tableStructure($table, $createTableSQL);
-
+        $sql = SQLFormat::tableStructure($table, $createTableSQL, Arr::get($this->config, 'drop_sql', false));
         return [$sql, $isBackupData];
     }
 
@@ -154,11 +153,16 @@ class Mysql implements ReaderInterface
     {
         $result = $this->connection->query("SHOW CREATE TABLE `{$table}`");
         $sql = SQLFormat::executeTableStructure($result);
-        if ( ! empty($result[0]["Create View"])) {
+        if (!empty($result[0]["Create View"])) {
             return [false, $sql];
         }
-
         return [true, $sql];
+    }
+
+    public function renameTable($table, $newName)
+    {
+        $sql = "RENAME TABLE `{$table}` TO `{$newName}`;";
+        return $this->connection->query($sql);
     }
 
     /**
@@ -204,6 +208,7 @@ class Mysql implements ReaderInterface
      * @param string|array $sqls
      *
      * @return int
+     *
      * @throws SQLExecuteException
      */
     public function import($sqls)

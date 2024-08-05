@@ -208,7 +208,7 @@ layui.define(['table', 'form', 'layer'], function (exports) {
                         $.ajax({
                             type: "GET",
                             url: url,
-                            data: {"filename": data.name},
+                            data: {"filename": data.filename},
                             success: function (ret) {
                                 obj.del()
                                 layer.msg(ret.msg)
