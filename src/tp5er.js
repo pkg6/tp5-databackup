@@ -220,6 +220,9 @@ layui.define(['table', 'form', 'layer'], function (exports) {
             },
             deletes: function (elem, obj) {
                 var data = table.checkStatus(obj.config.id).data;
+                if (data.length <= 0){
+                    return layer.msg('请选择需要删除的备份文件')
+                }
                 var url = elem.getAttribute("lay-url")
                 var names = []
                 var filenames = []
@@ -227,7 +230,6 @@ layui.define(['table', 'form', 'layer'], function (exports) {
                     names.push(element.name)
                     filenames.push(element.filename)
                 });
-
                 layer.msg('确定要删除吗？' + names.join(","), {
                     time: 0
                     , btn: ['确定', '取消']
