@@ -94,13 +94,10 @@ trait Controller
     }
 
     /**
-     * @param string name 文件路径
-     *
-     * @summary 导入
-     *
-     * @description 文件过大会导致出现接口超时，读取失败等问题,推荐使用队列进行导入/命令行进行导入.
-     *
-     * @return \think\Response|Json
+     * @deprecated
+     * 导入功能等待3.x版本重构，此版本问题比较多，这个版本将采用第三方进行导入为主
+     * 文件过大会导致出现接口超时，读取失败等问题,推荐使用队列进行导入/命令行进行导入.
+     * @return \think\Response
      */
     public function doImport()
     {
