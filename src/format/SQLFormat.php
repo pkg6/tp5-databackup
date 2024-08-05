@@ -21,7 +21,7 @@ class SQLFormat
 {
     public static function dividingLine()
     {
-        return '-- -----------------------------' . PHP_EOL;
+        return PHP_EOL . '-- -----------------------------' . PHP_EOL;
     }
 
     /**
@@ -43,9 +43,9 @@ class SQLFormat
         $sql .= "-- Port     : " . $hostport . PHP_EOL;
         $sql .= "-- Database : " . $backup->getDatabase() . PHP_EOL;
         $sql .= "-- PHP Version : " . phpversion() . PHP_EOL;
-        $sql .= "-- Date : " . date("Y-m-d H:i:s") . PHP_EOL;
+        $sql .= "-- Date : " . date("Y-m-d H:i:s");
         $sql .= self::dividingLine();
-        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL . PHP_EOL;
+        $sql .= 'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";' . PHP_EOL;
         $sql .= 'SET FOREIGN_KEY_CHECKS = 0;' . PHP_EOL;
 
         return $sql;
@@ -54,19 +54,20 @@ class SQLFormat
     /**
      * @param $table
      * @param $createTableSQL
+     * @param bool $withDrop
      *
      * @return string
      */
-    public static function tableStructure($table, $createTableSQL)
+    public static function tableStructure($table, $createTableSQL, $withDrop = false)
     {
-        $sql = PHP_EOL;
-        $sql .= self::dividingLine();
-        $sql .= "-- Table structure for $table" . PHP_EOL;
+        $sql = self::dividingLine();
+        $sql .= "-- Table structure for $table";
         $sql .= self::dividingLine();
         $sql .= PHP_EOL;
+        if ($withDrop) {
+            $sql .= "DROP TABLE IF EXISTS `{$table}`; " . PHP_EOL;
+        }
         $sql .= $createTableSQL;
-        $sql .= PHP_EOL;
-
         return $sql;
     }
 
@@ -95,14 +96,12 @@ class SQLFormat
         $sql = "";
         if ($annotation) {
             $sql .= self::dividingLine();
-            $sql .= "-- Records of $table" . PHP_EOL;
+            $sql .= "-- Records of $table";
             $sql .= self::dividingLine();
         }
-        $sql .= PHP_EOL;
         //INSERT INTO 开始事务的方式
         //$sql .= "BEGIN;";
-        $sql .= $instertSQL;
-        $sql .= ";";
+        $sql .= PHP_EOL . $instertSQL . ';';
 
         return $sql;
     }

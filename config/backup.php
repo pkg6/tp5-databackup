@@ -20,6 +20,8 @@ return [
             "write_type" => 'file',
             //读取生成sql语句的类
             "reader_type" => 'mysql',
+            //在备份文件的时候是否 携带 DROP TABLE IF EXISTS `test_table`;
+            'drop_sql' => true,
             //sql文件存储路径
             "path" => app()->getRootPath() . "backup",
         ]

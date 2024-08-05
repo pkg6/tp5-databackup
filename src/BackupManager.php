@@ -218,9 +218,7 @@ class BackupManager implements BackupInterface
         }
         if (isset($this->readers[$readerType])) {
             $this->currentReaderType = $readerType;
-
             $writer = $this->readers[$readerType];
-
             return $writer;
         }
         throw new InvalidArgumentException("Unable to find {$readerType} reader method");
