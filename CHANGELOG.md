@@ -1,4 +1,3 @@
-
 ## 2.2以上版本
 
 1. Backup.php文件正式删除
@@ -11,8 +10,12 @@
 8. 移除response添加自定义函数`backup_success`和 `backup_error`
 9. `src/validate `目录下文件名修改
 10. 移除不必要的异常
-
-
+11. [将导入功能标记废弃](https://github.com/pkg6/tp5-databackup/issues/90)
+12. 封装SQLFormat来进行组装成需要的SQL语句
+13. 目前可以在第三方导入平台进行导入，phpmyadmin，navicat 同时也是2.x版本主要维护
+14. 根据配置`drop_sql`来判断是否加入`DROP TABLE IF EXISTS table `SQL语句
+15. 根据`layui`配置家在前端（用于测试）资源文件
+16. topthink/think-view `^1.0 || ^2.0`
 
 ## 2.1以上版本
 
