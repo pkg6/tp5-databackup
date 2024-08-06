@@ -239,17 +239,8 @@ class SQLFileWriter implements WriterInterface
             throw new FileNotException($pathFileName);
         }
         $sql = file_get_contents($pathFileName);
-        $sqlCommands = explode(';', $sql);
-        $sqlArr = [];
-        foreach ($sqlCommands as $sqlCommand) {
-            // 去除空白字符
-            $sqlCommand = trim($sqlCommand);
-            // 执行SQL语句
-            if ( ! empty($sqlCommand)) {
-                $sqlArr [] = $sqlCommand;
-            }
-        }
-        return $sqlArr;
+
+        return $sql;
     }
 
     /**

@@ -141,6 +141,7 @@ class Mysql implements ReaderInterface
     {
         list($isBackupData, $createTableSQL) = $this->executeTableStructure($table);
         $sql = SQLFormat::tableStructure($table, $createTableSQL, Arr::get($this->config, 'drop_sql', false));
+
         return [$sql, $isBackupData];
     }
 
@@ -153,15 +154,17 @@ class Mysql implements ReaderInterface
     {
         $result = $this->connection->query("SHOW CREATE TABLE `{$table}`");
         $sql = SQLFormat::executeTableStructure($result);
-        if (!empty($result[0]["Create View"])) {
+        if ( ! empty($result[0]["Create View"])) {
             return [false, $sql];
         }
+
         return [true, $sql];
     }
 
     public function renameTable($table, $newName)
     {
         $sql = "RENAME TABLE `{$table}` TO `{$newName}`;";
+
         return $this->connection->query($sql);
     }
 
@@ -213,11 +216,16 @@ class Mysql implements ReaderInterface
      */
     public function import($sqls)
     {
+        /**
+         * @var \think\db\connector\Mysql $connection
+         */
+        $connection = $this->connection;
+        $pdo = $connection->connect();
         if (is_array($sqls)) {
             foreach ($sqls as $index => $sql) {
                 try {
                     if ($sql != "") {
-                        $this->connection->execute($sql);
+                        $pdo->exec($sql);
                     }
                 } catch (\Exception $exception) {
                     throw  new SQLExecuteException($index, $sql, $exception);
@@ -227,6 +235,6 @@ class Mysql implements ReaderInterface
             return 1;
         }
 
-        return $this->connection->execute($sqls);
+        return $pdo->exec($sqls);
     }
 }

@@ -11,7 +11,8 @@
   "require": {
     "php": ">=7.2.5",
     "ext-json": "*",
-    "ext-zlib": "*"
+    "ext-zlib": "*",
+    "ext-pdo": "*"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.9",
