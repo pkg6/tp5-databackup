@@ -359,7 +359,7 @@ class BackupManager implements BackupInterface
 
         //触发步骤1事件
         $this->app->event->trigger(Event::backupStep1, [
-            $this, $filename, $tables,""
+            $this, $filename, $tables, ""
         ]);
 
         return $writer->writeSQL($factory->getReader()->copyright($this));
@@ -472,7 +472,7 @@ class BackupManager implements BackupInterface
 
             //触发事件
             $this->app->event->trigger(Event::backupStep2Data, [
-                $this, $filename, $this->currentBackupTable,$dataSQL,$lastPage,
+                $this, $filename, $this->currentBackupTable, $dataSQL, $lastPage,
             ]);
 
             return $lastPage;
@@ -484,7 +484,7 @@ class BackupManager implements BackupInterface
 
             //触发事件
             $this->app->event->trigger(Event::backupStep2Data, [
-                $this, $filename, $this->currentBackupTable,$sql,$isBackupData,
+                $this, $filename, $this->currentBackupTable, $sql, $isBackupData,
             ]);
 
             if ($isBackupData) {
@@ -619,8 +619,10 @@ class BackupManager implements BackupInterface
      */
     public function import($fileName)
     {
+
         $factory = $this->factory();
-        $sqls = $factory->getWriter()->readSQL($fileName);
+        $sqls = Arr::get($this->config, 'before_import_sql', []);
+        $sqls[] = $factory->getWriter()->readSQL($fileName);
 
         return $factory->getReader()->import($sqls);
     }

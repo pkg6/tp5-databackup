@@ -29,6 +29,9 @@ return [
     //一次请求存储100条数据
     "limit" => 100,
 
+    "before_import_sql" => [
+//        "set global max_allowed_packet = 2*1024*1024*10",
+    ]
 //    'layui'=>[
 //        'tp5erjs'=>'https://cdn.jsdelivr.net/gh/pkg6/tp5-databackup@main/src/tp5er.js'
 //    ]

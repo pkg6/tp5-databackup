@@ -210,9 +210,9 @@ class Mysql implements ReaderInterface
     /**
      * @param string|array $sqls
      *
-     * @return int
+     * @return int|bool
      *
-     * @throws SQLExecuteException
+     * @throws SQLExecuteException|\think\db\exception\PDOException
      */
     public function import($sqls)
     {
@@ -234,7 +234,9 @@ class Mysql implements ReaderInterface
 
             return 1;
         }
+        $ret = $pdo->exec($sqls);
+        $connection->close();
 
-        return $pdo->exec($sqls);
+        return $ret;
     }
 }
