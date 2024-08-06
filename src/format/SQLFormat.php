@@ -68,6 +68,7 @@ class SQLFormat
             $sql .= "DROP TABLE IF EXISTS `{$table}`; " . PHP_EOL;
         }
         $sql .= $createTableSQL;
+
         return $sql;
     }
 
