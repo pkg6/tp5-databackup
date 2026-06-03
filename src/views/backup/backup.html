@@ -35,28 +35,162 @@
 </script>
 
 <script src="{$layui.layuijs}"></script>
-<!--https://github.com/pkg6/think-backup/blob/main/src/tp5er.js-->
-<script src="{$layui.tp5erjs}"></script>
 
 <script>
-    layui.define(['tp5er'], function (exports) {
-        var tp5er = layui.tp5er
-        tp5er.backup.bind('elem-backup-tables')
-            .render({
-                cols: [[
-                    {type: 'checkbox', fixed: 'left'},
-                    {field: 'name', title: '表名', width: 200},
-                    {field: 'engine', title: '引擎', width: 120},
-                    {field: 'rows', title: '数据量', width: 120},
-                    {field: 'data_length', title: '数据大小', width: 120},
-                    {field: 'collation', title: '排序规则', width: 180},
-                    {field: 'comment', title: '表注释', width: 120},
-                    {field: 'create_time', title: '创建时间', width: 180},
-                    {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
-                ]],
-                toolbar: '#table-opt',
-            })
-            .on()
+    layui.use(['table', 'layer'], function () {
+        var table = layui.table;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+
+        var elem = 'elem-backup-tables';
+        var url = document.getElementById(elem).getAttribute("lay-url");
+
+        table.render({
+            elem: '#' + elem,
+            url: url,
+            cols: [[
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'name', title: '表名', width: 200},
+                {field: 'engine', title: '引擎', width: 120},
+                {field: 'rows', title: '数据量', width: 120},
+                {field: 'data_length', title: '数据大小', width: 120},
+                {field: 'collation', title: '排序规则', width: 180},
+                {field: 'comment', title: '表注释', width: 120},
+                {field: 'create_time', title: '创建时间', width: 180},
+                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
+            ]],
+            toolbar: '#table-opt',
+        });
+
+        function objtables(obj) {
+            var data = table.checkStatus(obj.config.id).data;
+            var tables = [];
+            for (var i = 0; i < data.length; i++) {
+                tables[i] = data[i].name;
+            }
+            return tables;
+        }
+
+        function step1(url, table, callback) {
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: {"tables": table},
+                success: function (ret) {
+                    if (ret.code === 0) {
+                        typeof callback === "function" && callback(ret);
+                    } else {
+                        layer.msg(ret.msg);
+                    }
+                }
+            });
+        }
+
+        function step2(url, index, page, callback) {
+            $.ajax({
+                type: "GET",
+                async: true,
+                url: url,
+                data: {"index": index, "page": page},
+                success: function (ret) {
+                    if (ret.code === 0) {
+                        if (ret.data.page >= 0) {
+                            step2(url, ret.data.index, ret.data.page, callback);
+                        }
+                        typeof callback === "function" && callback(ret);
+                    } else {
+                        layer.msg(ret.msg);
+                    }
+                }
+            });
+        }
+
+        function step3(url, ret2, callback) {
+            if (ret2.data.page === -1) {
+                $.ajax({
+                    type: "GET",
+                    url: url,
+                    success: function (ret) {
+                        typeof callback === "function" && callback(ret);
+                    }
+                });
+            }
+        }
+
+        table.on("toolbar(" + elem + ")", function (obj) {
+            var btn = this;
+            switch (obj.event) {
+                case 'import':
+                    location.href = btn.getAttribute("lay-url");
+                    break;
+                case 'backups':
+                    var tables = objtables(obj);
+                    var step1_url = btn.getAttribute("step1-url");
+                    var step2_url = btn.getAttribute("step2-url");
+                    var step3_url = btn.getAttribute("step3-url");
+                    var process_id = btn.getAttribute("backup-process-id");
+                    step1(step1_url, tables, function (ret1) {
+                        if (process_id) {
+                            document.getElementById(process_id).innerHTML = ret1.msg;
+                        }
+                        btn.classList.add('layui-btn-disabled');
+                        step2(step2_url, ret1.data.index, ret1.data.page, function (ret2) {
+                            if (process_id) {
+                                document.getElementById(process_id).innerHTML = "当前正在备份的表:" + ret2.data.table;
+                            }
+                            step3(step3_url, ret2, function () {
+                                if (process_id) {
+                                    document.getElementById(process_id).innerHTML = "备份完毕";
+                                }
+                                btn.classList.remove('layui-btn-disabled');
+                            });
+                        });
+                    });
+                    break;
+                case 'optimizes':
+                    var url = btn.getAttribute("lay-url");
+                    var tables = objtables(obj);
+                    $.ajax({
+                        type: 'POST',
+                        url: url,
+                        data: {"tables": tables},
+                        success: function (ret) {
+                            layer.msg(ret.msg);
+                        }
+                    });
+                    break;
+                case 'repairs':
+                    var url = btn.getAttribute("lay-url");
+                    var tables = objtables(obj);
+                    $.ajax({
+                        type: 'POST',
+                        url: url,
+                        data: {"tables": tables},
+                        success: function (ret) {
+                            layer.msg(ret.msg);
+                        }
+                    });
+                    break;
+            }
+        });
+
+        table.on("tool(" + elem + ")", function (obj) {
+            var btn = this;
+            switch (obj.event) {
+                case 'optimize':
+                case 'repair':
+                    var url = btn.getAttribute("lay-url");
+                    $.ajax({
+                        type: 'POST',
+                        url: url,
+                        data: {"tables": obj.data.name},
+                        success: function (ret) {
+                            layer.msg(ret.msg);
+                        }
+                    });
+                    break;
+            }
+        });
     });
 </script>
 </body>

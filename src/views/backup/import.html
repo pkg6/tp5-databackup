@@ -26,25 +26,120 @@
 </script>
 
 <script src="{$layui.layuijs}"></script>
-<!--https://github.com/pkg6/think-backup/blob/main/src/tp5er.js-->
-<script src="{$layui.tp5erjs}"></script>
 
 <script>
-    layui.define(['tp5er'], function (exports) {
-        var tp5er = layui.tp5er
-        tp5er.imports.bind('elem-import-table')
-            .render({
-                cols: [[
-                    {type: 'checkbox', fixed: 'left'},
-                    {field: 'name', title: '文件名', width: 120},
-                    {field: 'database', title: '数据库', width: 120},
-                    {field: 'connection', title: '数据库链接', width: 120},
-                    {field: 'size', title: '大小', width: 120},
-                    {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
-                ]],
-                toolbar: '#table-opt',
-            })
-            .on()
+    layui.use(['table', 'layer'], function () {
+        var table = layui.table;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+
+        var elem = 'elem-import-table';
+        var url = document.getElementById(elem).getAttribute("lay-url");
+
+        table.render({
+            elem: '#' + elem,
+            url: url,
+            cols: [[
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'name', title: '文件名', width: 120},
+                {field: 'database', title: '数据库', width: 120},
+                {field: 'connection', title: '数据库链接', width: 120},
+                {field: 'size', title: '大小', width: 120},
+                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
+            ]],
+            toolbar: '#table-opt',
+        });
+
+        table.on("toolbar(" + elem + ")", function (obj) {
+            var btn = this;
+            switch (obj.event) {
+                case 'backup':
+                    location.href = btn.getAttribute("lay-url");
+                    break;
+                case 'deletes':
+                    var data = table.checkStatus(obj.config.id).data;
+                    if (data.length <= 0) {
+                        return layer.msg('请选择需要删除的备份文件');
+                    }
+                    var url = btn.getAttribute("lay-url");
+                    var names = [];
+                    var filenames = [];
+                    data.forEach(function (element) {
+                        names.push(element.name);
+                        filenames.push(element.filename);
+                    });
+                    layer.msg('确定要删除吗？' + names.join(","), {
+                        time: 0,
+                        btn: ['确定', '取消'],
+                        yes: function (index) {
+                            filenames.forEach(function (file) {
+                                $.ajax({
+                                    type: "GET",
+                                    url: url,
+                                    async: true,
+                                    data: {"filename": file},
+                                    success: function (ret) {
+                                        layer.msg(ret.msg);
+                                    }
+                                });
+                            });
+                            layer.close(index);
+                        }
+                    });
+                    break;
+            }
+        });
+
+        table.on("tool(" + elem + ")", function (obj) {
+            var btn = this;
+            switch (obj.event) {
+                case 'download':
+                    layer.msg('确定要下载吗？', {
+                        time: 0,
+                        btn: ['确定', '取消'],
+                        yes: function (index) {
+                            window.open(btn.getAttribute("lay-url") + "?filename=" + obj.data.filename, '_blank');
+                            layer.close(index);
+                        }
+                    });
+                    break;
+                case 'import':
+                    layer.msg('确定要导入吗？', {
+                        time: 0,
+                        btn: ['确定', '取消'],
+                        yes: function (index) {
+                            $.ajax({
+                                type: "GET",
+                                url: btn.getAttribute("lay-url"),
+                                data: {"name": obj.data.name},
+                                success: function (ret) {
+                                    layer.msg(ret.msg);
+                                }
+                            });
+                            layer.close(index);
+                        }
+                    });
+                    break;
+                case 'delete':
+                    layer.msg('确定要删除吗？', {
+                        time: 0,
+                        btn: ['确定', '取消'],
+                        yes: function (index) {
+                            $.ajax({
+                                type: "GET",
+                                url: btn.getAttribute("lay-url"),
+                                data: {"filename": obj.data.filename},
+                                success: function (ret) {
+                                    obj.del();
+                                    layer.msg(ret.msg);
+                                }
+                            });
+                            layer.close(index);
+                        }
+                    });
+                    break;
+            }
+        });
     });
 </script>
 </body>
