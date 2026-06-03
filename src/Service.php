@@ -14,4 +14,9 @@ class Service extends \think\Service
             return new DbBackup($this->app);
         });
     }
+
+    public function boot()
+    {
+        Route::register();
+    }
 }

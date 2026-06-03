@@ -5,4 +5,5 @@ return [
     'limit' => 100,
     'drop_sql' => true,
     'before_import_sql' => [],
+    'route_prefix' => 'backup',
 ];

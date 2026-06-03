@@ -15,8 +15,10 @@ class BackupController
         return Backup::database();
     }
 
-    protected function fetch(string $name, string $prefix): string
+    protected function fetch(string $name, ?string $prefix = null): string
     {
+        $prefix = $prefix ?: config('backup.route_prefix', 'backup');
+
         View::config([
             'view_path' => __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR,
         ]);
@@ -39,7 +41,6 @@ class BackupController
         $layuiConfig = config('backup.layui', []);
         View::assign('routes', $routes);
         View::assign('layui', [
-            'tp5erjs' => $layuiConfig['tp5erjs'] ?? 'https://cdn.jsdelivr.net/gh/pkg6/tp5-databackup@main/src/tp5er.js',
             'layuijs' => $layuiConfig['layuijs'] ?? '//unpkg.com/layui@2.9.8/dist/layui.js',
             'layuicss' => $layuiConfig['layuicss'] ?? '//cdn.staticfile.org/layui/2.9.7/css/layui.css',
         ]);
@@ -47,14 +48,14 @@ class BackupController
         return View::fetch($name);
     }
 
-    public function index(): string
+    public function index(?string $prefix = null): string
     {
-        return $this->fetch('backup/backup', '/index');
+        return $this->fetch('backup/backup', $prefix);
     }
 
-    public function import(): string
+    public function import(?string $prefix = null): string
     {
-        return $this->fetch('backup/import', '/index');
+        return $this->fetch('backup/import', $prefix);
     }
 
     public function tables()
