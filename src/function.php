@@ -83,7 +83,7 @@ if (!function_exists('backup_validate')) {
     {
         $validate = new \think\Validate();
         $validate
-            ->rule('opt', 'require|in:import,backup,repair,optimize')
+            ->rule('opt', 'require|in:import,backup,repair,optimize,drop,truncate,prefixChange')
             ->rule('database', 'require')
             ->message([
                 'opt.require' => '操作不能为空',
@@ -116,8 +116,15 @@ if (!function_exists('backup_run')) {
                 return $backup->repair($data['tables']);
             case 'optimize':
                 return $backup->optimize($data['tables']);
+            case 'drop':
+                return $backup->drop($data['tables']);
+            case 'truncate':
+                return $backup->truncate($data['tables']);
+            case 'prefixChange':
+                return $backup->prefixChange($data['tables']);
             default:
                 throw new BackupException('Task execution failed');
         }
     }
+
 }

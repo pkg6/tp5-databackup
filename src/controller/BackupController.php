@@ -36,6 +36,9 @@ class BackupController
             'delete' => $prefix . '/delete',
             'view_backup' => $prefix . '/index',
             'view_import' => $prefix . '/import',
+            "drop" => $prefix . "/drop",
+            "truncate" => $prefix . "/truncate",
+            "prefixChange" => $prefix . "/prefixChange",
         ];
 
         $layuiConfig = config('backup.layui', []);
@@ -154,6 +157,19 @@ class BackupController
 
     public function cleanup()
     {
+        $file = request()->param('file');
+        
+        // 如果提供了文件名，进行压缩
+        if (!empty($file)) {
+            try {
+                $this->db()->compressBackup($file);
+                return backup_success([], '备份完成，正在压缩...');
+            } catch (\Exception $e) {
+                // 压缩失败不影响备份结果，继续返回成功
+                return backup_success([], '备份完成（压缩失败：' . $e->getMessage() . '）');
+            }
+        }
+        
         return backup_success([], '整库备份完毕！');
     }
 
@@ -193,4 +209,78 @@ class BackupController
 
         return backup_success('', '删除成功');
     }
+
+    
+    /**
+     * @summary 删除表
+     *
+     * @param array|string tables
+     *
+     * @return \think\Response
+     */
+    public function drop()
+    {
+        $tables = request()->param("tables");
+        if (is_null($tables)) {
+            return backup_error("没有获取到表");
+        }
+        if ($this->db()->drop($tables)) {
+            return backup_success($tables, "数据表删除完成！");
+        } else {
+            return backup_error("数据表删除出错请重试");
+        }
+    }
+
+    /**
+     * @summary 清空表
+     *
+     * @param array|string tables
+     *
+     * @return \think\Response
+     */
+    public function truncate()
+    {
+        $tables = request()->param("tables");
+        if (is_null($tables)) {
+            return backup_error("没有获取到表");
+        }
+        if ($this->db()->truncate($tables)) {
+            return backup_success($tables, "数据表清空完成！");
+        } else {
+            return backup_error("数据表清空出错请重试");
+        }
+    }
+
+    /**
+     * @summary 批量修改表前缀
+     *
+     * @description 批量修改选中表的前缀，例如将表前缀从 old_ 修改为 new_
+     *
+     * @param array|string tables 要修改前缀的表名列表
+     * @param string prefix 新的表前缀
+     *
+     * @return \think\Response
+     */
+    public function prefixChange()
+    {
+        $tables = request()->param("tables");
+        $prefix = request()->param("prefix");
+        
+        if (is_null($tables)) {
+            return backup_error("没有获取到表");
+        }
+        if (is_null($prefix) || trim($prefix) === '') {
+            return backup_error("请输入表前缀");
+        }
+        
+        // 调用底层的 prefixChange 方法
+        $successCount = $this->db()->prefixChange($tables, $prefix);
+        
+        if ($successCount > 0) {
+            return backup_success([], "成功修改 {$successCount} 个表的前缀！");
+        } else {
+            return backup_error("修改表前缀失败，请检查后重试！");
+        }
+    }
+
 }

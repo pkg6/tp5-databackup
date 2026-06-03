@@ -27,7 +27,7 @@ class BackupCommand extends Command
         $database = $output->choice($input, '选择需要操作的数据库连接', array_keys($databaseConnections));
         $backup = Backup::database($database);
 
-        $opt = $output->choice($input, '选择操作方式', ['import', 'backup', 'repair', 'optimize']);
+        $opt = $output->choice($input, '选择操作方式', ['import', 'backup', 'repair', 'optimize', 'drop', 'truncate', 'prefixChange']);
 
         if ($opt === 'import') {
             $this->caseImport($backup, $input, $output);
@@ -74,6 +74,18 @@ class BackupCommand extends Command
                 case 'backup':
                     $backup->backup($backupTable);
                     $output->info('备份数据处理完成');
+                    break;
+                case 'drop':
+                    $backup->drop($backupTable);
+                    $output->info('删除表数据处理完成');
+                    break;
+                case 'truncate':
+                    $backup->truncate($backupTable);
+                    $output->info('清空表数据处理完成');
+                    break;
+                case 'prefixChange':
+                    $backup->prefixChange($backupTable);
+                    $output->info('批量修改表前缀处理完成');
                     break;
                 default:
                     $output->error('无法处理你的操作 ' . $opt);

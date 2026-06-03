@@ -23,6 +23,9 @@ class Route
             RouteFacade::get('cleanup', 'BackupController@cleanup');
             RouteFacade::get('index', 'BackupController@index');
             RouteFacade::get('import', 'BackupController@import');
+            RouteFacade::post('drop', 'BackupController@drop');
+            RouteFacade::post('truncate', 'BackupController@truncate');
+            RouteFacade::post('prefixChange', 'BackupController@prefixChange');
         })->prefix('\\tp5er\\Backup\\controller\\');
     }
 }
