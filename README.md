@@ -16,41 +16,32 @@
 composer require tp5er/tp5-databackup
 ~~~
 
-### 使用方式1: 继承 `tp5er\Backup\controller\BackupController`
+### 使用方式1: 自动路由注册
 
-> 重要的事情说三遍！！！重要的事情说三遍！！！重要的事情说三遍！！！
+> 安装后 Service 会自动注册路由，路由前缀通过 `config/backup.php` 中的 `route_prefix` 配置（默认 `backup`）。
 >
-> 在thinkphp框架中定义一个控制器，然后继承`tp5er\Backup\controller\BackupController`，然后跳转到`BackupController`控制器中查看方法，都是中国人看的懂中国话。
-
-### 使用方式2: 使用路由`route/app.php`
-
-> 通过路由使用案例： \tp5er\Backup\Route::route();
+> 访问 `http://yourdomain/backup/index` 即可打开备份管理页面。
 >
-> 由于页面使用layui渲染的前端页面，你可以参考前端页面自己量身定做，然后使用\tp5er\Backup\Route::api();调用接口也是可以的哦
+> 页面基于 LayUI 渲染，你也可以参考视图文件自行定制前端。
+
+### 使用方式2: 继承 `tp5er\Backup\controller\BackupController`
+
+> 在 thinkphp 中定义一个控制器继承 `BackupController`，调用时可选传入路由前缀：
+> ```php
+> $controller->index('/custom-prefix');  // 手动指定前缀
+> $controller->import();                 // 自动使用配置中的 route_prefix
+> ```
+
+### 使用方式3: 在 `route/app.php` 中手动注册
+
+> 在应用的路由文件中调用注册方法，路由前缀取自 `config('backup.route_prefix')`，可自定义。
 
 ~~~
 <?php
-// +----------------------------------------------------------------------
-// | ThinkPHP [ WE CAN DO IT JUST THINK ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2006~2018 http://thinkphp.cn All rights reserved.
-// +----------------------------------------------------------------------
-// | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
-// +----------------------------------------------------------------------
-// | Author: liu21st <liu21st@gmail.com>
-// +----------------------------------------------------------------------
-use think\facade\Route;
-
-Route::get('think', function () {
-    return 'hello,ThinkPHP6!';
-});
-
-Route::get('hello/:name', 'index/hello');
-
-\tp5er\Backup\Route::route();
+\tp5er\Backup\Route::register();
 ~~~
 
-### 使用方式3: 通过队列的方法
+### 使用方式4: 通过队列的方法
 
 #### 还原数据
 
@@ -70,7 +61,7 @@ $data["table"]=["fa_category","fa_auth_rule"];
 backup_queue($data);
 ~~~
 
-### 使用方式4: 通过命令行
+### 使用方式5: 通过命令行
 
 ~~~
 //进入交互模式进行相关操作
@@ -89,7 +80,7 @@ php think backup:list
 php think backup:cleanup
 ~~~
 
-### 使用方式5: 自定义（1.x升级到2.x）
+### 自定义（1.x升级到2.x）
 
 > 1.x和2.x 方法对比
 
@@ -182,9 +173,19 @@ reader：定义读取SQL的方法，目前只支持Mysql，自定义扩展可以
 
 writer：定义的写入SQL方法，目前只支持File，自定义扩展可以实现  `tp5er\Backup\writer\WriterInterface`
 
-Factory：定义reader和writer对象初始化
+## 配置项
 
-BackupManager：所有的相关操作都在这里
+`config/backup.php`:
+
+```php
+return [
+    'path'            => runtime_path() . 'backup' . DIRECTORY_SEPARATOR,  // 备份文件存储目录
+    'limit'           => 100,                                              // 每页备份数据量
+    'drop_sql'        => true,                                             // 是否生成 DROP TABLE 语句
+    'before_import_sql' => [],                                             // 导入前执行的 SQL
+    'route_prefix'    => 'backup',                                         // 路由前缀
+];
+```
 
 ## 版本修改记录
 
