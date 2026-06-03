@@ -62,59 +62,13 @@
             toolbar: '#table-opt',
         });
 
-        function objtables(obj) {
+        function getCheckedTableNames(obj) {
             var data = table.checkStatus(obj.config.id).data;
-            var tables = [];
+            var names = [];
             for (var i = 0; i < data.length; i++) {
-                tables[i] = data[i].name;
+                names.push(data[i].name);
             }
-            return tables;
-        }
-
-        function step1(url, table, callback) {
-            $.ajax({
-                type: "POST",
-                url: url,
-                data: {"tables": table},
-                success: function (ret) {
-                    if (ret.code === 0) {
-                        typeof callback === "function" && callback(ret);
-                    } else {
-                        layer.msg(ret.msg);
-                    }
-                }
-            });
-        }
-
-        function step2(url, index, page, callback) {
-            $.ajax({
-                type: "GET",
-                async: true,
-                url: url,
-                data: {"index": index, "page": page},
-                success: function (ret) {
-                    if (ret.code === 0) {
-                        if (ret.data.page >= 0) {
-                            step2(url, ret.data.index, ret.data.page, callback);
-                        }
-                        typeof callback === "function" && callback(ret);
-                    } else {
-                        layer.msg(ret.msg);
-                    }
-                }
-            });
-        }
-
-        function step3(url, ret2, callback) {
-            if (ret2.data.page === -1) {
-                $.ajax({
-                    type: "GET",
-                    url: url,
-                    success: function (ret) {
-                        typeof callback === "function" && callback(ret);
-                    }
-                });
-            }
+            return names;
         }
 
         table.on("toolbar(" + elem + ")", function (obj) {
@@ -124,32 +78,73 @@
                     location.href = btn.getAttribute("lay-url");
                     break;
                 case 'backups':
-                    var tables = objtables(obj);
+                    var tables = getCheckedTableNames(obj);
                     var step1_url = btn.getAttribute("step1-url");
                     var step2_url = btn.getAttribute("step2-url");
                     var step3_url = btn.getAttribute("step3-url");
                     var process_id = btn.getAttribute("backup-process-id");
-                    step1(step1_url, tables, function (ret1) {
-                        if (process_id) {
-                            document.getElementById(process_id).innerHTML = ret1.msg;
-                        }
-                        btn.classList.add('layui-btn-disabled');
-                        step2(step2_url, ret1.data.index, ret1.data.page, function (ret2) {
-                            if (process_id) {
-                                document.getElementById(process_id).innerHTML = "当前正在备份的表:" + ret2.data.table;
+                    var processEl = process_id ? document.getElementById(process_id) : null;
+
+                    $.ajax({
+                        type: "POST",
+                        url: step1_url,
+                        data: {"tables": tables},
+                        success: function (ret1) {
+                            if (ret1.code !== 0) {
+                                return layer.msg(ret1.msg);
                             }
-                            step3(step3_url, ret2, function () {
-                                if (process_id) {
-                                    document.getElementById(process_id).innerHTML = "备份完毕";
+                            if (processEl) processEl.innerHTML = ret1.msg;
+                            btn.classList.add('layui-btn-disabled');
+
+                            var file = ret1.data.file;
+                            var list = ret1.data.tables;
+                            var idx = 0;
+
+                            function backupTable() {
+                                if (idx >= list.length) {
+                                    $.ajax({
+                                        type: "GET",
+                                        url: step3_url,
+                                        success: function () {
+                                            if (processEl) processEl.innerHTML = "备份完毕";
+                                            btn.classList.remove('layui-btn-disabled');
+                                        }
+                                    });
+                                    return;
                                 }
-                                btn.classList.remove('layui-btn-disabled');
-                            });
-                        });
+
+                                var tableName = list[idx].table;
+                                if (processEl) processEl.innerHTML = "当前正在备份的表:" + tableName;
+
+                                function backupPage(page) {
+                                    $.ajax({
+                                        type: "GET",
+                                        url: step2_url,
+                                        data: {"file": file, "table": tableName, "page": page},
+                                        success: function (ret) {
+                                            if (ret.code !== 0) {
+                                                return layer.msg(ret.msg);
+                                            }
+                                            if (ret.data.page > 0) {
+                                                backupPage(ret.data.page);
+                                            } else {
+                                                idx++;
+                                                backupTable();
+                                            }
+                                        }
+                                    });
+                                }
+
+                                backupPage(1);
+                            }
+
+                            backupTable();
+                        }
                     });
                     break;
                 case 'optimizes':
                     var url = btn.getAttribute("lay-url");
-                    var tables = objtables(obj);
+                    var tables = getCheckedTableNames(obj);
                     $.ajax({
                         type: 'POST',
                         url: url,
@@ -161,7 +156,7 @@
                     break;
                 case 'repairs':
                     var url = btn.getAttribute("lay-url");
-                    var tables = objtables(obj);
+                    var tables = getCheckedTableNames(obj);
                     $.ajax({
                         type: 'POST',
                         url: url,
