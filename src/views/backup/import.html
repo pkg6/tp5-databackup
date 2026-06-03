@@ -26,26 +26,163 @@
 </script>
 
 <script src="{$layui.layuijs}"></script>
-<!--https://github.com/pkg6/think-backup/blob/main/src/tp5er.js-->
-<script src="{$layui.tp5erjs}"></script>
 
 <script>
-    layui.define(['tp5er'], function (exports) {
-        var tp5er = layui.tp5er
-        tp5er.imports.bind('elem-import-table')
-            .render({
-                cols: [[
-                    {type: 'checkbox', fixed: 'left'},
-                    {field: 'name', title: '文件名', width: 120},
-                    {field: 'database', title: '数据库', width: 120},
-                    {field: 'connection', title: '数据库链接', width: 120},
-                    {field: 'size', title: '大小', width: 120},
-                    {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
-                ]],
-                toolbar: '#table-opt',
-            })
-            .on()
+    layui.use(['table', 'layer'], function () {
+        var table = layui.table;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+
+        var elem = 'elem-import-table';
+        var url = document.getElementById(elem).getAttribute("lay-url");
+
+        table.render({
+            elem: '#' + elem,
+            url: url,
+            cols: [[
+                {type: 'checkbox', fixed: 'left'},
+                {field: 'name', title: '文件名', width: 120},
+                {field: 'database', title: '数据库', width: 120},
+                {field: 'connection', title: '数据库链接', width: 120},
+                {field: 'size', title: '大小', width: 120},
+                    {field: 'version', title: '版本号', width: 120},
+                    {field: 'ext', title: '扩展名', width: 80},
+                {field: 'time', title: '创建时间', width: 200},
+                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
+            ]],
+            toolbar: '#table-opt',
+        });
+
+        table.on("toolbar(" + elem + ")", function (obj) {
+            var btn = this;
+            switch (obj.event) {
+                case 'backup':
+                    location.href = btn.getAttribute("lay-url");
+                    break;
+                case 'deletes':
+                    var data = table.checkStatus(obj.config.id).data;
+                    if (data.length <= 0) {
+                        return layer.msg('请选择需要删除的备份文件');
+                    }
+                    var url = btn.getAttribute("lay-url");
+                    var names = [];
+                    var filenames = [];
+                    data.forEach(function (element) {
+                        names.push(element.name);
+                        filenames.push(element.filename);
+                    });
+                    layer.msg('确定要删除吗？' + names.join(","), {
+                        time: 0,
+                        btn: ['确定', '取消'],
+                        yes: function (index) {
+                            filenames.forEach(function (file) {
+                                $.ajax({
+                                    type: "GET",
+                                    url: url,
+                                    async: true,
+                                    data: {"filename": file},
+                                    success: function (ret) {
+                                        layer.msg(ret.msg);
+                                    }
+                                });
+                            });
+                            layer.close(index);
+                        }
+                    });
+                    break;
+            }
+        });
+
+        table.on("tool(" + elem + ")", function (obj) {
+            var btn = this;
+            switch (obj.event) {
+                case 'download':
+                    layer.msg('确定要下载吗？', {
+                        time: 0,
+                        btn: ['确定', '取消'],
+                        yes: function (index) {
+                            window.open(btn.getAttribute("lay-url") + "?filename=" + obj.data.filename, '_blank');
+                            layer.close(index);
+                        }
+                    });
+                    break;
+                case 'import':
+                    layer.msg('确定要导入吗？', {
+                        time: 0,
+                        btn: ['确定', '取消'],
+                        yes: function (index) {
+                            // 显示加载提示
+                            var loading = layer.load(1, {
+                                shade: [0.5,'#000'],
+                                content: '正在导入数据...',
+                                success: function(layero){
+                                    layero.find('.layui-layer-content').css({
+                                        'color': '#fff',
+                                        'font-size': '14px',
+                                        'font-weight': 'bold',
+                                        'text-align': 'center',
+                                        'padding': '10px 20px',
+                                        'background': 'rgba(0, 150, 136, 0.9)',
+                                        'border-radius': '6px',
+                                        'min-width': '160px'
+                                    });
+                                }
+                            });
+                            
+                            $.ajax({
+                                type: "GET",
+                                url: btn.getAttribute("lay-url"),
+                                data: {"name": obj.data.name},
+                                success: function (ret) {
+                                    layer.close(loading);
+                                    layer.msg(ret.msg);
+                                    refreshPage();
+                                },
+                                error: function() {
+                                    layer.close(loading);
+                                    layer.msg('导入失败');
+                                }
+                            });
+                            layer.close(index);
+                        }
+                    });
+                    break;
+                case 'delete':
+                    layer.msg('确定要删除吗？', {
+                        time: 0,
+                        btn: ['确定', '取消'],
+                        yes: function (index) {
+                            $.ajax({
+                                type: "GET",
+                                url: btn.getAttribute("lay-url"),
+                                data: {"filename": obj.data.filename},
+                                success: function (ret) {
+                                    obj.del();
+                                    layer.msg(ret.msg);
+                                }
+                            });
+                            layer.close(index);
+                        }
+                    });
+                    break;
+            }
+        });
     });
+    
+    // ========== 全局刷新工具函数 ========== 
+    function refreshPage() { 
+        // 1. 收起"选择操作"下拉菜单（适配原有逻辑） 
+        var dropdownBtn = document.querySelector(".operation-dropdown"); 
+        var dropdownMenu = document.querySelector(".dropdown-menu"); 
+        if (dropdownBtn && dropdownMenu) { 
+            dropdownBtn.classList.remove("layui-btn-normal"); 
+            dropdownMenu.style.display = "none"; 
+        } 
+        // 2. 延迟刷新（与提示信息时长保持一致，避免用户看不到提示） 
+        setTimeout(() => { 
+            window.location.reload(); 
+        }, 1500); 
+    } 
 </script>
 </body>
 </html>
