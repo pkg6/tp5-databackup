@@ -4,536 +4,60 @@
     <meta charset="UTF-8">
     <title>数据库备份案例</title>
     <link href="{$layui.layuicss}" rel="stylesheet">
-    <style>
-        /* 基本样式 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
- 
-        /* 下拉菜单容器 */
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        
-        /* 下拉按钮样式 */
-        .dropbtn {
-            background-color: #4CAF50;
-            color: white;
-            padding: 5px;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            min-width: 100px;
-            transition: background-color 0.3s;
-        }
-        
-        .dropbtn:hover {
-            background-color: #45a049;
-        }
-        
-        /* 下拉内容（默认隐藏） */
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #f9f9f9;
-            min-width: 100px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1000;
-            border-radius: 4px;
-            overflow: hidden;
-            top: 100%;
-            left: 0;
-            margin-top: 5px;
-        }
-        
-        /* 下拉菜单中的链接 */
-        .dropdown-content a {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            border-bottom: 1px solid #eee;
-            transition: background-color 0.2s;
-        }
-        
-        .dropdown-content a:hover {
-            background-color: #f1f1f1;
-        }
-        
-        /* 鼠标悬停时显示下拉菜单（方案A） */
-        .dropdown-hover:hover .dropdown-content {
-            display: block;
-        }
-        
-        /* 显示类（用于JavaScript控制的点击下拉） */
-        .show {
-            display: block;
-        }
-        
-        /* 示例布局 */
-        .examples {
-            display: flex;
-            justify-content: flex-start;
-            flex-wrap: wrap;
-        }
-        
-        .example {
-            text-align: left;
-            margin: 5px 5px 5px 25px;
-        }
-        
-        .example h3 {
-            margin-bottom: 10px;
-            color: #555;
-        }
-        
-        .instructions {
-            background-color: #f0f8ff;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 20px;
-        }
-/* 核心布局：并排+自动换行 */
-.table-opt-container {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px; /* 按钮间距，优化视觉呼吸感 */
-  padding: 8px 0;
-}
-
-/* 折叠标题：按钮化样式 */
-.layui-colla-title {
-  width: auto !important;
-  min-width: 100px; /* 加宽最小宽度，更易点击 */
-  padding: 0 5px;
-  height: 36px; /* 统一按钮高度 */
-  line-height: 36px; /* 垂直居中 */
-  cursor: pointer;
-  border: 1px solid #e6e6e6;
-  border-radius: 4px;
-  background-color: #f5f5f5;
-  transition: all 0.2s ease; /* 平滑过渡 */
-}
-
-/* 折叠标题hover效果 */
-.layui-colla-title:hover {
-  background-color: #f0f0f0;
-  border-color: #dcdcdc;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-/* 展开状态标题高亮 */
-.layui-colla-item .layui-colla-title.layui-colla-title-active {
-  background-color: #4e97fd;
-  color: #fff;
-  border-color: #4e97fd;
-}
-
-/* 折叠内容区域 */
-.layui-colla-content {
-  display: none;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin-top: 10px;
-  
-  border-top: 1px solid #eee;
-  border-radius: 4px;
-  background-color: #fafafa;
-}
-
-.layui-colla-content.layui-show {
-  display: block;
-}
-
-/* 操作按钮：独占一行+hover效果 */
-.opt-btn-item {
-  display: block;
-  width: 100%;
-  height: 34px;
-  line-height: 34px;
-  margin-bottom: 8px;
-  padding: 0;
-  text-align: center;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-/* 不同操作按钮差异化颜色 */
-.opt-btn-item[lay-event="import"] { background-color: #52c41a; border-color: #52c41a; }
-.opt-btn-item[lay-event="backups"] { background-color: #4e97fd; border-color: #4e97fd; }
-.opt-btn-item[lay-event="optimizes"] { background-color: #faad14; border-color: #faad14; }
-.opt-btn-item[lay-event="repairs"] { background-color: #1890ff; border-color: #1890ff; }
-.opt-btn-item[lay-event="drops"] { background-color: #ff4d4f; border-color: #ff4d4f; }
-.opt-btn-item[lay-event="truncates"] { background-color: #722ed1; border-color: #722ed1; }
-
-/* 按钮hover增强 */
-.opt-btn-item:hover {
-  opacity: 0.9;
-  transform: translateY(-1px); /* 轻微上浮 */
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.opt-btn-item:last-child {
-  margin-bottom: 0;
-}
-
-/* 备份状态按钮样式优化 */
-#backup-process {
-  height: 36px;
-  line-height: 36px;
-  padding: 0 18px;
-  border-radius: 4px;
-}.layui-navss{position:relative;padding:0 15px;background-color:#2f363c;color:#fff;border-radius:2px;font-size:0;box-sizing:border-box}
-    </style>
 </head>
 <body>
 
 <!--表格呈现-->
 <table class="layui-hide" id="elem-backup-tables" lay-url="{$routes.tables}"></table>
+<!--批量操作-->
+<script type="text/html" id="table-opt">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="import" lay-url="{$routes.view_import}">还原</button>
+        <button class="layui-btn layui-btn-sm" id="backups-status"
+                lay-event="backups"
+                backup-process-id="backup-process"
+                step1-url="{$routes.backupStep1}"
+                step2-url="{$routes.backupStep2}"
+                step3-url="{$routes.cleanup}">备份表
+        </button>
+        <button class="layui-btn layui-btn-disabled" id="backup-process">备份状态变化</button>
+        <button class="layui-btn layui-btn-sm" lay-event="optimizes" lay-url="{$routes.optimize}">优化表</button>
+        <button class="layui-btn layui-btn-sm" lay-event="repairs" lay-url="{$routes.repair}">修复表</button>
 
-<script type="text/html" id="table-opt">   
-<div class="layui-btn-container table-opt-container">
-        <div class="examples">
-            <div class="example">
-                <div class="dropdown">
-                    <button onclick="toggleDropdown(event)" class="dropbtn">选择操作</button>
-                    <div class="dropdown-content">
-        <span class="layui-btn layui-btn-sm opt-btn-item" lay-event="import" lay-url="{$routes.view_import}">还原</span>
-        <span class="layui-btn layui-btn-sm opt-btn-item" id="backups-status" lay-event="backups" backup-process-id="backup-process" step1-url="{$routes.backupStep1}" step2-url="{$routes.backupStep2}" step3-url="{$routes.cleanup}">备份表</span>
-        <span class="layui-btn layui-btn-sm opt-btn-item" lay-event="optimizes" lay-url="{$routes.optimize}">优化表</span>
-        <span class="layui-btn layui-btn-sm opt-btn-item" lay-event="repairs" lay-url="{$routes.repair}">修复表</span>
-        <span class="layui-btn layui-btn-sm opt-btn-item" lay-event="drops" lay-url="{$routes.drop}">删除表</span>
-        <span class="layui-btn layui-btn-sm opt-btn-item" lay-event="truncates" lay-url="{$routes.truncate}">清空表</span>
-        <span class="layui-btn layui-btn-sm opt-btn-item" lay-event="prefixChange" lay-url="{$routes.prefixChange}">批量修改表前缀</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-  <!-- 备份状态按钮 -->
-  <span class="layui-btn layui-btn-disabled" id="backup-process">备份状态</span>
-
-</div>
+    </div>
 </script>
-
 <!--单行操作-->
 <script type="text/html" id="table-row-opt">
     <div class="layui-btn-container">
         <button class="layui-btn layui-btn-sm" lay-event="optimize" lay-url="{$routes.optimize}">优化表</button>
         <button class="layui-btn layui-btn-sm" lay-event="repair" lay-url="{$routes.repair}">修复表</button>
-       <button class="layui-btn layui-btn-sm" lay-event="truncate" lay-url="{$routes.truncate}">清空表</button>
-        <button class="layui-btn layui-btn-sm" lay-event="drop" lay-url="{$routes.drop}">删除表</button>
     </div>
 </script>
 
 <script src="{$layui.layuijs}"></script>
+<!--https://github.com/pkg6/think-backup/blob/main/src/tp5er.js-->
+<script src="{$layui.tp5erjs}"></script>
+
 <script>
-    layui.use(['table', 'layer'], function () {
-        var table = layui.table;
-        var layer = layui.layer;
-        var $ = layui.jquery;
-
-        var elem = 'elem-backup-tables';
-        var url = document.getElementById(elem).getAttribute("lay-url");
-
-        table.render({
-            elem: '#' + elem,
-            url: url,
-            cols: [[
-                {type: 'checkbox', fixed: 'left'},
-                {field: 'name', title: '表名', width: 200},
-                {field: 'engine', title: '引擎', width: 120},
-                {field: 'rows', title: '数据量', width: 120},
-                {field: 'data_length', title: '数据大小', width: 120},
-                {field: 'collation', title: '排序规则', width: 180},
-                {field: 'comment', title: '表注释', width: 120},
-                {field: 'create_time', title: '创建时间', width: 180},
-                {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
-            ]],
-            toolbar: '#table-opt',
-        });
-
-        function getCheckedTableNames(obj) {
-            var data = table.checkStatus(obj.config.id).data;
-            var names = [];
-            for (var i = 0; i < data.length; i++) {
-                names.push(data[i].name);
-            }
-            return names;
-        }
-
-    // ========== 新增：全局刷新工具函数 ==========
-    function refreshPage() {
-        // 1. 收起"选择操作"下拉菜单（适配原有逻辑）
-        var dropdownBtn = document.querySelector(".operation-dropdown");
-        var dropdownMenu = document.querySelector(".dropdown-menu");
-        if (dropdownBtn && dropdownMenu) {
-            dropdownBtn.classList.remove("layui-btn-normal");
-            dropdownMenu.style.display = "none";
-        }
-        // 2. 延迟刷新（与提示信息时长保持一致，避免用户看不到提示）
-        setTimeout(() => {
-            window.location.reload();
-        }, 1500);
-    }
-        table.on("toolbar(" + elem + ")", function (obj) {
-            var btn = this;
-            switch (obj.event) {
-                case 'import':
-                    location.href = btn.getAttribute("lay-url");
-                    break;
-                case 'backups':
-                    var tables = getCheckedTableNames(obj);
-                    var step1_url = btn.getAttribute("step1-url");
-                    var step2_url = btn.getAttribute("step2-url");
-                    var step3_url = btn.getAttribute("step3-url");
-                    var process_id = btn.getAttribute("backup-process-id");
-                    var processEl = process_id ? document.getElementById(process_id) : null;
-
-                    $.ajax({
-                        type: "POST",
-                        url: step1_url,
-                        data: {"tables": tables},
-                        success: function (ret1) {
-                            if (ret1.code !== 0) {
-                                return layer.msg(ret1.msg);
-                            }
-                            if (processEl) processEl.innerHTML = ret1.msg;
-                            btn.classList.add('layui-btn-disabled');
-
-                            var file = ret1.data.file;
-                            var list = ret1.data.tables;
-                            var idx = 0;
-
-                            function backupTable() {
-                                if (idx >= list.length) {
-                                    if (processEl) processEl.innerHTML = "<span style='color:red'>备份完成，正在压缩...</span>";
-                                    $.ajax({
-                                        type: "GET",
-                                        url: step3_url,
-                                        data: {"file": file},
-                                        success: function (ret) {
-                                            if (ret.code === 0) {
-                                                if (processEl) processEl.innerHTML = "备份完毕";
-                                            } else {
-                                                if (processEl) processEl.innerHTML = "备份完成（压缩失败）";
-                                            }
-                                            btn.classList.remove('layui-btn-disabled');
-                                            refreshPage();
-                                        }
-                                    });
-                                    return;
-                                }
-
-                                var tableName = list[idx].table;
-                                if (processEl) processEl.innerHTML = "当前正在备份的表:" + tableName;
-
-                                function backupPage(page) {
-                                    $.ajax({
-                                        type: "GET",
-                                        url: step2_url,
-                                        data: {"file": file, "table": tableName, "page": page},
-                                        success: function (ret) {
-                                            if (ret.code !== 0) {
-                                                return layer.msg(ret.msg);
-                                            }
-                                            if (ret.data.page > 0) {
-                                                backupPage(ret.data.page);
-                                            } else {
-                                                idx++;
-                                                backupTable();
-                                            }
-                                        }
-                                    });
-                                }
-
-                                backupPage(1);
-                            }
-
-                            backupTable();
-                        }
-                    });
-                    break;
-                case 'optimizes':
-                    var url = btn.getAttribute("lay-url");
-                    var tables = getCheckedTableNames(obj);
-                    $.ajax({
-                        type: 'POST',
-                        url: url,
-                        data: {"tables": tables},
-                        success: function (ret) {
-                            layer.msg(ret.msg);
-                            refreshPage();
-                        }
-                    });
-                    break;
-                case 'repairs':
-                    var url = btn.getAttribute("lay-url");
-                    var tables = getCheckedTableNames(obj);
-                    $.ajax({
-                        type: 'POST',
-                        url: url,
-                        data: {"tables": tables},
-                        success: function (ret) {
-                            layer.msg(ret.msg);
-                            refreshPage();
-                        }
-                    });
-                    break;
-                case 'drops':
-                    var url = btn.getAttribute("lay-url");
-                    var tables = getCheckedTableNames(obj);
-                    $.ajax({
-                        type: 'POST',
-                        url: url,
-                        data: {"tables": tables},
-                        success: function (ret) {
-                            layer.msg(ret.msg);
-                            refreshPage();
-                        }
-                    });
-                    break;
-                case 'truncates':
-                    var url = btn.getAttribute("lay-url");
-                    var tables = getCheckedTableNames(obj);
-                    $.ajax({
-                        type: 'POST',
-                        url: url,
-                        data: {"tables": tables},
-                        success: function (ret) {
-                            layer.msg(ret.msg);
-                            refreshPage();
-                        }
-                    });
-                    break;
-                case 'prefixChange':
-                    var url = btn.getAttribute("lay-url");
-                    var tables = getCheckedTableNames(obj);
-                if (tables.length === 0) {
-                    layer.msg('请先选择要修改前缀的表', {time:1500,anim:6})
-                    return
-                }
-                
-                layer.prompt({
-                    formType: 0,
-                    value: '',
-                    title: '请输入新的表前缀',
-                    area: ['300px', '100px'],
-                    btn: ['确定', '取消'],
-                    success: function(layero, index){
-                        layero.find('.layui-layer-input').attr('placeholder', '例如：tp_');
-                    }
-                }, function(prefix, index){
-                    prefix = prefix.trim();
-                    
-                    if (!prefix) {
-                        layer.msg('前缀不能为空', {time:1500,anim:6})
-                        return
-                    }
-                    
-                    $.ajax({
-                        type: 'POST',
-                        url: url,
-                        data: {
-                            "tables": tables,
-                            "prefix": prefix
-                        },
-                        success: function (ret) {
-                        layer.msg(ret.msg);
-                        refreshPage();
-                        }
-                    })
-                });
-                    break;
-            }
-        });
-
-        table.on("tool(" + elem + ")", function (obj) {
-            var btn = this;
-            switch (obj.event) {
-                case 'optimize':
-                case 'repair':
-                    var url = btn.getAttribute("lay-url");
-                    $.ajax({
-                        type: 'POST',
-                        url: url,
-                        data: {"tables": obj.data.name},
-                        success: function (ret) {
-                            layer.msg(ret.msg);
-                            refreshPage();
-                        }
-                    });
-                    break;
-                case 'truncate':
-                    var url = btn.getAttribute("lay-url");
-                    layer.confirm('确定要清空表 ' + obj.data.name + ' 吗？此操作不可恢复！', {
-                        icon: 3,
-                        title: '确认清空'
-                    }, function(index){
-                        $.ajax({
-                            type: 'POST',
-                            url: url,
-                            data: {"tables": obj.data.name},
-                            success: function (ret) {
-                                layer.msg(ret.msg);
-                                refreshPage();
-                            }
-                        });
-                        layer.close(index);
-                    });
-                    break;
-                case 'drop':
-                    var url = btn.getAttribute("lay-url");
-                    layer.confirm('确定要删除表 ' + obj.data.name + ' 吗？此操作不可恢复！', {
-                        icon: 3,
-                        title: '确认删除'
-                    }, function(index){
-                        $.ajax({
-                            type: 'POST',
-                            url: url,
-                            data: {"tables": obj.data.name},
-                            success: function (ret) {
-                                layer.msg(ret.msg);
-                                refreshPage();
-                            }
-                        });
-                        layer.close(index);
-                    });
-                    break;
-            }
-        });
+    layui.define(['tp5er'], function (exports) {
+        var tp5er = layui.tp5er
+        tp5er.backup.bind('elem-backup-tables')
+            .render({
+                cols: [[
+                    {type: 'checkbox', fixed: 'left'},
+                    {field: 'name', title: '表名', width: 200},
+                    {field: 'engine', title: '引擎', width: 120},
+                    {field: 'rows', title: '数据量', width: 120},
+                    {field: 'data_length', title: '数据大小', width: 120},
+                    {field: 'collation', title: '排序规则', width: 180},
+                    {field: 'comment', title: '表注释', width: 120},
+                    {field: 'create_time', title: '创建时间', width: 180},
+                    {fixed: 'right', title: '操作', width: 200, toolbar: '#table-row-opt'}
+                ]],
+                toolbar: '#table-opt',
+            })
+            .on()
     });
 </script>
-    <script>
-        // 切换下拉菜单的显示/隐藏
-        function toggleDropdown(event) {
-            event.stopPropagation();
-            var dropdownContent = event.target.nextElementSibling;
-            dropdownContent.classList.toggle("show");
-        }
-        
-        // 点击页面其他区域时关闭所有下拉菜单
-        window.onclick = function() {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                dropdowns[i].classList.remove("show");
-            }
-        }
-        
-        // 为下拉菜单添加键盘无障碍支持
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                var dropdowns = document.getElementsByClassName("dropdown-content");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    dropdowns[i].classList.remove('show');
-                }
-            }
-        });
-    </script>
 </body>
 </html>

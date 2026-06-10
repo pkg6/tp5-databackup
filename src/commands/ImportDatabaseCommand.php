@@ -1,5 +1,17 @@
 <?php
 
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * (L) Licensed <https://opensource.org/license/MIT>
+ *
+ * (A) zhiqiang <https://www.zhiqiang.wang>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 namespace tp5er\Backup\commands;
 
 use think\console\Command;
@@ -12,6 +24,7 @@ class ImportDatabaseCommand extends Command
 {
     protected function configure()
     {
+        // 指令配置
         $this->setName('backup:import')
             ->addArgument('filename', Argument::REQUIRED, 'Enter file name for example: fastadmin-mysql-20240417201417.sql')
             ->addArgument('connection', Argument::OPTIONAL, 'Connect to database alias')
@@ -25,9 +38,8 @@ class ImportDatabaseCommand extends Command
         $backup = Backup::database($connection);
         try {
             $backup->import($filename);
-            $output->info('数据还原成功 ' . $filename);
-        } catch (\Exception $e) {
-            $output->error($e->getMessage());
+        } catch (\Exception $exception) {
+            $output->error($exception->getMessage());
         }
     }
 }

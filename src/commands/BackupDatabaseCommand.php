@@ -1,5 +1,17 @@
 <?php
 
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * (L) Licensed <https://opensource.org/license/MIT>
+ *
+ * (A) zhiqiang <https://www.zhiqiang.wang>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 namespace tp5er\Backup\commands;
 
 use think\console\Command;
@@ -12,6 +24,7 @@ class BackupDatabaseCommand extends Command
 {
     protected function configure()
     {
+        // 指令配置
         $this->setName('backup:database')
             ->addArgument('connection', Argument::OPTIONAL, 'Connect to database alias')
             ->setDescription('Back up all table structures and data in the database');
@@ -21,13 +34,21 @@ class BackupDatabaseCommand extends Command
     {
         $connection = $input->getArgument('connection');
         $backup = Backup::database($connection);
-        $tables = array_column($backup->tables(), 'Name');
-
+        //获取所有的表
+        $table = $backup->tables();
+        $tables = array_column($table, 'Name');
         try {
-            $backup->backup($tables);
-            $output->info('所有数据表备份完成');
-        } catch (\Exception $e) {
-            $output->error($e->getMessage());
+            $tableRun = $backup->backup($tables);
+            foreach ($tableRun as $table => $ret) {
+                if ($ret) {
+                    $output->info("表结构与表数据备份完成 " . $table);
+                } else {
+                    $output->error("数据表备份失败 " . $table);
+                }
+            }
+        } catch (\Exception $exception) {
+            $output->error($exception->getMessage());
         }
     }
+
 }

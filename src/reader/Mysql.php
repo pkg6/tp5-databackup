@@ -1,89 +1,112 @@
 <?php
 
+/*
+ * This file is part of the tp5er/tp5-databackup.
+ *
+ * (c) pkg6 <https://github.com/pkg6>
+ *
+ * (L) Licensed <https://opensource.org/license/MIT>
+ *
+ * (A) zhiqiang <https://www.zhiqiang.wang>
+ *
+ * This source file is subject to the MIT license that is bundled.
+ */
+
 namespace tp5er\Backup\reader;
 
+use think\App;
 use think\db\ConnectionInterface;
+use think\helper\Arr;
+use tp5er\Backup\BackupInterface;
+use tp5er\Backup\exception\SQLExecuteException;
+use tp5er\Backup\exception\WriteException;
 use tp5er\Backup\format\SQLFormat;
 
-class Mysql
+class Mysql implements ReaderInterface
 {
-    protected ConnectionInterface $connection;
+    const NAME = "mysql";
+    /**
+     * @var App
+     */
+    protected $app;
+    /**
+     * @var
+     */
+    protected $config;
 
-    public function __construct(ConnectionInterface $connection)
+    /**
+     * @param App $app
+     *
+     * @return void
+     */
+    public function setApp(App $app)
+    {
+        $this->app = $app;
+    }
+
+    /**
+     * @param $config
+     *
+     * @return void
+     */
+    public function setConfig($config)
+    {
+        $this->config = $config;
+    }
+
+    /**
+     * @return string
+     */
+    public function type()
+    {
+        return self::NAME;
+    }
+
+    /**
+     * @var ConnectionInterface
+     */
+    protected $connection;
+
+    /**
+     * @param ConnectionInterface $connection
+     *
+     * @return $this|Mysql
+     */
+    public function setConnection(ConnectionInterface $connection)
     {
         $this->connection = $connection;
+
+        return $this;
     }
 
-    public function header(string $database, string $connectionName): string
-    {
-        return SQLFormat::header($database, $connectionName);
-    }
-
-    public function tables(): array
-    {
-        return $this->connection->query('SHOW TABLE STATUS');
-    }
-    
     /**
-     * 获取表的 AUTO_INCREMENT 值
-     * @param string $table 表名
-     * @return int AUTO_INCREMENT 值
+     * @param BackupInterface $backup
+     *
+     * @return string
      */
-    public function getAutoIncrement(string $table): int
+    public function copyright(BackupInterface $backup)
     {
-        $result = $this->connection->query("SHOW TABLE STATUS LIKE '{$table}'");
-        if (!empty($result) && isset($result[0]['Auto_increment'])) {
-            return intval($result[0]['Auto_increment']);
-        }
-        return 0;
+        return SQLFormat::copyright($backup);
     }
 
-    public function tableCount(string $table): int
+    /**
+     * @return array|mixed
+     */
+    public function tables()
+    {
+        return $this->connection->query("SHOW TABLE STATUS");
+    }
+
+    public function tableCount($table)
     {
         return $this->connection->table($table)->count();
     }
 
-    public function tableStructure(string $table, bool $withDrop = false): array
-    {
-        $result = $this->connection->query("SHOW CREATE TABLE `{$table}`");
-
-        if (!empty($result[0]['Create View'])) {
-            $createSql = trim($result[0]['Create View']);
-
-            return [SQLFormat::tableStructure($table, $createSql, $withDrop), false];
-        }
-
-        $createSql = trim($result[0]['Create Table']);
-
-        return [SQLFormat::tableStructure($table, $createSql, $withDrop), true];
-    }
-
-    public function tableData(string $table, int $limit, int $offset): string
-    {
-        $rows = $this->connection->query("SELECT * FROM `{$table}` LIMIT {$limit} OFFSET {$offset}");
-        if (empty($rows)) {
-            return '';
-        }
-
-        return SQLFormat::tableInsert($table, $rows);
-    }
-
-    public function import($sqls): bool
-    {
-        $pdo = $this->connection->connect();
-        if (is_array($sqls)) {
-            foreach ($sqls as $sql) {
-                if ($sql !== '') {
-                    $pdo->exec($sql);
-                }
-            }
-
-            return true;
-        }
-
-        return $pdo->exec($sqls) !== false;
-    }
-
+    /**
+     * @param $tables
+     *
+     * @return mixed|string
+     */
     public function optimize($tables)
     {
         if (is_array($tables)) {
@@ -93,6 +116,11 @@ class Mysql
         return $this->connection->query("OPTIMIZE TABLE `{$tables}`");
     }
 
+    /**
+     * @param $tables
+     *
+     * @return mixed
+     */
     public function repair($tables)
     {
         if (is_array($tables)) {
@@ -101,83 +129,114 @@ class Mysql
 
         return $this->connection->query("REPAIR TABLE `{$tables}`");
     }
-    /**
-     * @param $tables
-     *
-     * @return mixed|string
-     */
-    public function truncate($tables)
-    {
-        if (!is_array($tables)) {
-            $tables = explode('`,`', $tables);
-        }
-         foreach ($tables as $table) {
-         $this->connection->query("TRUNCATE TABLE `{$table}`");
-        } 
-         return true;
-    }
-
 
     /**
-     * @param $tables
+     * @param $table
      *
-     * @return mixed
+     * @return array
+     *
+     * @throws WriteException
      */
-    public function drop($tables)
+    public function tableStructure($table)
     {
-        if (!is_array($tables)) {
-            $tables = explode('`,`', $tables);
-        }
-         foreach ($tables as $table) {
-         $this->connection->query("DROP TABLE `{$table}`");
-        } 
-         return true;
+        list($isBackupData, $createTableSQL) = $this->executeTableStructure($table);
+        $sql = SQLFormat::tableStructure($table, $createTableSQL, Arr::get($this->config, 'drop_sql', false));
+
+        return [$sql, $isBackupData];
     }
-    
+
     /**
-     * 批量修改表前缀
+     * @param $table
      *
-     * @param array|string $tables
-     * @param string $prefix
-     *
-     * @return bool
+     * @return array
      */
-    public function prefixChange($tables, $prefix)
+    protected function executeTableStructure($table)
     {
-        if (!is_array($tables)) {
-            $tables = explode(',', $tables);
+        $result = $this->connection->query("SHOW CREATE TABLE `{$table}`");
+        $sql = SQLFormat::executeTableStructure($result);
+        if ( ! empty($result[0]["Create View"])) {
+            return [false, $sql];
         }
-        
-        $successCount = 0;
-        $failCount = 0;
-        
-        foreach ($tables as $table) {
-            $table = trim($table);
-            if (empty($table)) continue;
-            
-            // 获取表名中前缀之后的部分（找到第一个下划线）
-            // 例如：tp_user -> user，然后新表名是 prefix + user
-            $pos = strpos($table, '_');
-            if ($pos !== false) {
-                // 提取下划线之后的部分
-                $tableName = substr($table, $pos + 1);
-                $newTableName = $prefix . $tableName;
-            } else {
-                // 没有下划线，直接使用前缀 + 原表名
-                $newTableName = $prefix . $table;
+
+        return [true, $sql];
+    }
+
+    public function renameTable($table, $newName)
+    {
+        $sql = "RENAME TABLE `{$table}` TO `{$newName}`;";
+
+        return $this->connection->query($sql);
+    }
+
+    /**
+     * @param $table
+     * @param $limit
+     * @param $page
+     * @param bool $annotation
+     *
+     * @return array
+     */
+    public function tableData($table, $limit, $page, $annotation = true)
+    {
+        list($lastPage, $instertSQL) = $this->tableInsert(
+            $table,
+            $page,
+            $limit
+        );
+        // 表示没有数据可以进行备份
+        if ($lastPage <= 0) {
+            return ["", 0];
+        }
+        $sql = SQLFormat::tableData($table, $instertSQL, $annotation);
+
+        return [$sql, $lastPage];
+    }
+
+    protected function tableInsert($table, $page = 0, $limit = 100)
+    {
+        if ($page <= 0) {
+            $page = 1;
+        }
+        $offset = ($page - 1) * $limit;
+        $result = $this->connection->query("SELECT * FROM `{$table}` LIMIT {$limit} OFFSET {$offset}");
+        $sql = SQLFormat::tableInsert($table, $result);
+        if ($sql == "") {
+            return [0, ""];
+        }
+
+        return [$page + 1, $sql];
+    }
+
+    /**
+     * @param string|array $sqls
+     *
+     * @return int|bool
+     *
+     * @throws SQLExecuteException|\think\db\exception\PDOException
+     */
+    public function import($sqls)
+    {
+        /**
+         * @var \think\db\connector\Mysql $connection
+         */
+        $connection = $this->connection;
+        $pdo = $connection->connect();
+        if (is_array($sqls)) {
+            foreach ($sqls as $index => $sql) {
+                try {
+                    if ($sql != "") {
+                        $pdo->exec($sql);
+                    }
+                } catch (\Exception $exception) {
+                    throw  new SQLExecuteException($index, $sql, $exception);
+                }
             }
-            
-            try {
-                $sql = "RENAME TABLE `{$table}` TO `{$newTableName}`;";
-                $this->connection->query($sql);
-                $successCount++;
-            } catch (\Exception $e) {
-                $failCount++;
-            }
-        }
-        
-        // 返回修改成功的数量，而不是仅判断是否全部成功
-        return $successCount;
-    }
 
+            return 1;
+        }
+        $ret = $pdo->exec($sqls);
+        $connection->close();
+
+        return $ret;
+    }
 }
