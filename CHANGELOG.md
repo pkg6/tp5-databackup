@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.5.0] - 2026-06-03
+## [unreleased]
 
 ### 🚀 Features
 
@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ### 📚 Documentation
 
-- README 改进
+- 1.x->2.x
 
 ## [2.2.5] - 2024-06-11
 

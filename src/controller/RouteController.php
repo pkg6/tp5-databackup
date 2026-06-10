@@ -15,24 +15,22 @@
 namespace tp5er\Backup\controller;
 
 use think\facade\View;
+use tp5er\Backup\Route;
 
 /**
- * Class BackupController
- * composer require topthink/think-view
- * /index/backup 使用layui 实现备份的流程
- * /index/import 使用layui 实现还原的流程.
+ * Class RouteController.
+ *
+ * @see Route
  */
-class BackupController
+class RouteController
 {
     use Controller;
 
-    protected $prefix = "/index";
-
     protected function fetch($name)
     {
-        $routes = array_merge($this->apiRoutes($this->prefix), [
-            'view_backup' => $this->prefix . '/index',
-            'view_import' => $this->prefix . '/import',
+        $routes = array_merge($this->apiRoutes(Route::apiPrefix), [
+            'view_backup' => Route::prefix . '/backup',
+            'view_import' => Route::prefix . '/import',
         ]);
         \tp5er\Backup\View::view($routes);
 
@@ -44,7 +42,7 @@ class BackupController
      *
      * @return string
      */
-    public function index()
+    public function backup()
     {
         return $this->fetch('backup/backup');
     }
